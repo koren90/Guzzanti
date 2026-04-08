@@ -12,185 +12,74 @@
 <script src="https://unpkg.com/mqtt@5.5.0/dist/mqtt.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap');
-
-:root {
-  --bg:     #06060a;
-  --card:   #0d0d14;
-  --border: #1a1a2e;
-  --text:   #c8cad0;
-  --dim:    #5a5d6b;
-  --accent: #60a5fa;
-  --green:  #4ade80;
-  --orange: #f97316;
-  --cyan:   #06b6d4;
-  --red:    #f87171;
-  --yellow: #facc15;
-  --purple: #a78bfa;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; }
-body {
-  font-family: 'Outfit', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100%;
-  /* iOS safe areas */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  -webkit-tap-highlight-color: transparent;
-  -webkit-text-size-adjust: 100%;
-}
-
-.container { max-width: 720px; margin: 0 auto; padding: 16px 12px; }
-
-/* ── Header ── */
-.header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding-bottom: 14px; margin-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-.header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
-.header .sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
-.conn-badge {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 12px; font-weight: 600;
-  padding: 4px 12px; border-radius: 20px;
-  border: 1px solid var(--border);
-  background: #0a0a12;
-}
-.conn-badge .dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--red);
-  transition: background 0.3s;
-}
-.conn-badge.ok .dot { background: var(--green); }
-.conn-badge.ok { border-color: #1a3a2a; }
-
-/* ── Login ── */
-.login-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 24px; max-width: 400px; margin: 60px auto;
-}
-.login-card h2 { font-size: 16px; margin-bottom: 16px; }
-.login-card label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 4px; margin-top: 12px; }
-.login-card input {
-  width: 100%; padding: 10px 12px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); font-size: 16px; font-family: 'JetBrains Mono', monospace;
-}
-.login-card input:focus { outline: none; border-color: var(--accent); }
-.login-card .login-btn {
-  margin-top: 20px; width: 100%; padding: 12px;
-  border: none; border-radius: 8px;
-  background: var(--accent); color: #000; font-weight: 700;
-  font-size: 15px; cursor: pointer; transition: opacity 0.15s;
-}
-.login-card .login-btn:hover { opacity: 0.85; }
-.login-card .login-btn:active { transform: scale(0.98); }
-.login-card .err { color: var(--red); font-size: 12px; margin-top: 8px; min-height: 16px; }
-.login-card .saved-note { font-size: 11px; color: var(--dim); margin-top: 12px; text-align: center; }
-
-/* ── Hero ── */
-.hero {
-  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
-  margin-bottom: 14px;
-}
-.hero-item {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 10px; text-align: center;
-}
-.hero-item .label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
-.hero-item .value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 28px; font-weight: 700; margin: 4px 0 2px;
-  line-height: 1;
-}
-.hero-item .unit { font-size: 11px; color: var(--dim); }
-.co2-val { color: var(--accent); }
-.temp-val { color: var(--orange); }
-.hum-val { color: var(--cyan); }
-.trend-arrow { font-size: 16px; margin-left: 2px; vertical-align: middle; }
-.trend-arrow.up { color: var(--red); }
-.trend-arrow.flat { color: var(--dim); }
-.trend-arrow.down { color: var(--green); }
-
-/* ── Timestamp bar ── */
-.ts-bar {
-  text-align: center; font-size: 11px; color: var(--dim);
-  margin-bottom: 14px; padding: 4px 0;
-}
-
-/* ── Cards ── */
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-@media(max-width:520px) { .grid { grid-template-columns: 1fr; } }
-.card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px;
-}
-.card.wide { grid-column: 1 / -1; }
-.card h3 {
-  font-size: 11px; color: var(--dim); text-transform: uppercase;
-  letter-spacing: 1.5px; margin-bottom: 8px;
-  padding-bottom: 6px; border-bottom: 1px solid var(--border);
-}
-.row { display: flex; justify-content: space-between; padding: 3px 0; align-items: center; }
-.row .lbl { color: var(--dim); font-size: 13px; }
-.row .val { font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-.val.ok { color: var(--green); }
-.val.warn { color: var(--yellow); }
-.val.err { color: var(--red); }
-
-/* ── Controls ── */
-.ctrl-group { margin-top: 4px; }
-.ctrl-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 0; border-top: 1px solid var(--border);
-}
-.ctrl-row:first-child { border-top: none; }
-.ctrl-row .lbl { font-size: 13px; }
-.ctrl-btns { display: flex; gap: 6px; }
-.cbtn {
-  padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
-  border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); cursor: pointer; transition: all 0.15s;
-  font-family: 'Outfit', sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-.cbtn:active { transform: scale(0.95); background: #151520; }
-.cbtn.active { background: #1e3a5f; border-color: var(--accent); color: var(--accent); }
-.cbtn.danger { border-color: #3a1a1a; }
-.cbtn.danger:active { background: #2a1010; border-color: var(--red); color: var(--red); }
-
-/* ── Log ── */
-.log {
-  margin-top: 8px; padding: 8px; background: #08080e;
-  border: 1px solid var(--border); border-radius: 8px;
-  max-height: 100px; overflow-y: auto;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px;
-  color: var(--dim); line-height: 1.5;
-}
-.log .ts { color: #3a3d4b; }
-.log .ok { color: var(--green); }
-.log .err { color: var(--red); }
-
-/* ── Disconnect button ── */
-.disconnect-row {
-  margin-top: 14px; text-align: center;
-  padding-top: 14px; border-top: 1px solid var(--border);
-}
-.disconnect-btn {
-  padding: 8px 24px; border-radius: 8px; font-size: 13px; font-weight: 600;
-  border: 1px solid #3a1a1a; background: var(--bg);
-  color: var(--dim); cursor: pointer; font-family: 'Outfit', sans-serif;
-}
-.disconnect-btn:active { background: #2a1010; color: var(--red); }
-
-.hidden { display: none; }
+:root{--bg:#06060a;--card:#0d0d14;--border:#1a1a2e;--text:#c8cad0;--dim:#5a5d6b;--accent:#60a5fa;--green:#4ade80;--orange:#f97316;--cyan:#06b6d4;--red:#f87171;--yellow:#facc15}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+.container{max-width:720px;margin:0 auto;padding:16px 12px}
+.header{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.header h1{font-size:18px;font-weight:700;letter-spacing:-0.5px}
+.header .sub{font-size:11px;color:var(--dim);margin-top:2px}
+.conn-badge{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:#0a0a12;transition:all .3s}
+.conn-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:background .3s}
+.conn-badge.ok .dot{background:var(--green)}
+.conn-badge.ok{border-color:#1a3a2a}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:400px;margin:60px auto}
+.login-card h2{font-size:16px;margin-bottom:16px}
+.login-card label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px;margin-top:12px}
+.login-card input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;font-family:'JetBrains Mono',monospace}
+.login-card input:focus{outline:none;border-color:var(--accent)}
+.login-card .login-btn{margin-top:20px;width:100%;padding:12px;border:none;border-radius:8px;background:var(--accent);color:#000;font-weight:700;font-size:15px;cursor:pointer}
+.login-card .login-btn:active{transform:scale(0.98)}
+.login-card .err{color:var(--red);font-size:12px;margin-top:8px;min-height:16px}
+.login-card .saved-note{font-size:11px;color:var(--dim);margin-top:12px;text-align:center}
+.hero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.hero-item{border-radius:12px;padding:14px 10px;text-align:center;border:1px solid var(--border);transition:background .6s,border-color .6s}
+.hero-item .label{font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.7}
+.hero-item .value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;margin:4px 0 2px;line-height:1}
+.hero-item .unit{font-size:11px;opacity:.6}
+.trend-arrow{font-size:16px;margin-left:2px;vertical-align:middle}
+.hero-co2{background:#0a1a0a;border-color:#1a3a1a;color:var(--green)}
+.hero-co2.level-ok{background:#0a1a0a;border-color:#1a3a1a;color:var(--green)}
+.hero-co2.level-mid{background:#1a1a08;border-color:#3a3a1a;color:var(--yellow)}
+.hero-co2.level-warn{background:#1a1208;border-color:#3a2a1a;color:var(--orange)}
+.hero-co2.level-alert{background:#1a0a0a;border-color:#3a1a1a;color:var(--red)}
+.hero-temp{background:#1a0e04;border-color:#2a1a0a;color:var(--orange)}
+.hero-hum{background:#041418;border-color:#0a2a30;color:var(--cyan)}
+.mini-chart-wrap{margin-bottom:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px 6px}
+.mini-chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.mini-chart-header .title{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.mini-chart-header .info{font-size:11px;color:var(--dim)}
+.mini-chart{width:100%;height:60px;display:block}
+.ts-bar{text-align:center;font-size:11px;color:var(--dim);margin-bottom:14px;padding:4px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
+.card.wide{grid-column:1/-1}
+.card h3{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.row{display:flex;justify-content:space-between;padding:3px 0;align-items:center}
+.row .lbl{color:var(--dim);font-size:13px}
+.row .val{font-weight:600;font-family:'JetBrains Mono',monospace;font-size:13px}
+.val.ok{color:var(--green)}.val.warn{color:var(--yellow)}.val.err{color:var(--red)}
+.ctrl-group{margin-top:4px}
+.ctrl-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border)}
+.ctrl-row:first-child{border-top:none}
+.ctrl-row .lbl{font-size:13px}
+.ctrl-btns{display:flex;gap:6px}
+.cbtn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
+.cbtn:active{transform:scale(0.95);background:#151520}
+.cbtn.active{background:#1e3a5f;border-color:var(--accent);color:var(--accent)}
+.cbtn.danger{border-color:#3a1a1a}
+.cbtn.danger:active{background:#2a1010;border-color:var(--red);color:var(--red)}
+.log{margin-top:8px;padding:8px;background:#08080e;border:1px solid var(--border);border-radius:8px;max-height:100px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);line-height:1.5}
+.log .ts{color:#3a3d4b}.log .ok{color:var(--green)}.log .err{color:var(--red)}
+.disconnect-row{margin-top:14px;text-align:center;padding-top:14px;border-top:1px solid var(--border)}
+.disconnect-btn{padding:8px 24px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid #3a1a1a;background:var(--bg);color:var(--dim);cursor:pointer;font-family:'Outfit',sans-serif}
+.disconnect-btn:active{background:#2a1010;color:var(--red)}
+.hidden{display:none}
 </style>
 </head>
 <body>
-
-<!-- ══════ LOGIN ══════ -->
 <div id="loginView">
   <div class="login-card">
     <h2>CO2 Monitor — Remote</h2>
@@ -207,66 +96,52 @@ body {
     <div class="saved-note" id="savedNote"></div>
   </div>
 </div>
-
-<!-- ══════ DASHBOARD ══════ -->
 <div id="dashView" class="hidden">
 <div class="container">
-
   <div class="header">
-    <div>
-      <h1>CO2 Monitor</h1>
-      <div class="sub">Remote MQTT</div>
-    </div>
-    <div class="conn-badge" id="badge">
-      <span class="dot"></span>
-      <span id="badgeText">Offline</span>
-    </div>
+    <div><h1>CO2 Monitor</h1><div class="sub">Remote MQTT</div></div>
+    <div class="conn-badge" id="badge"><span class="dot"></span><span id="badgeText">Offline</span></div>
   </div>
-
   <div class="hero">
-    <div class="hero-item">
+    <div class="hero-item hero-co2 level-ok" id="heroCo2">
       <div class="label">CO₂</div>
-      <div class="value co2-val"><span id="hCo2">--</span><span class="trend-arrow flat" id="tArrow">→</span></div>
+      <div class="value"><span id="hCo2">--</span><span class="trend-arrow" id="tArrow" style="opacity:0.4">→</span></div>
       <div class="unit">ppm</div>
     </div>
-    <div class="hero-item">
+    <div class="hero-item hero-temp">
       <div class="label">Teplota</div>
-      <div class="value temp-val" id="hTemp">--</div>
+      <div class="value" id="hTemp">--</div>
       <div class="unit">°C</div>
     </div>
-    <div class="hero-item">
+    <div class="hero-item hero-hum">
       <div class="label">Vlhkost</div>
-      <div class="value hum-val" id="hHum">--</div>
+      <div class="value" id="hHum">--</div>
       <div class="unit">%</div>
     </div>
   </div>
-
+  <div class="mini-chart-wrap">
+    <div class="mini-chart-header">
+      <span class="title">CO₂ historie</span>
+      <span class="info" id="chartInfo">0 vzorků</span>
+    </div>
+    <canvas class="mini-chart" id="miniChart"></canvas>
+  </div>
   <div class="ts-bar" id="tsBar">Čekám na data...</div>
-
   <div class="grid">
-
-    <!-- Status -->
     <div class="card">
       <h3>Master</h3>
-      <div class="row"><span class="lbl">Online</span><span class="val" id="sOnline">--</span></div>
-      <div class="row"><span class="lbl">WiFi</span><span class="val" id="sRssi">--</span></div>
       <div class="row"><span class="lbl">OLED</span><span class="val" id="sOled">--</span></div>
       <div class="row"><span class="lbl">Noční</span><span class="val" id="sNight">--</span></div>
       <div class="row"><span class="lbl">Dovolená</span><span class="val" id="sHoliday">--</span></div>
       <div class="row"><span class="lbl">Uptime</span><span class="val" id="sUptime">--</span></div>
     </div>
-
-    <!-- Slave -->
     <div class="card">
       <h3>Slave</h3>
       <div class="row"><span class="lbl">Online</span><span class="val" id="slOnline">--</span></div>
       <div class="row"><span class="lbl">Baterie</span><span class="val" id="slBatt">--</span></div>
-      <div class="row"><span class="lbl">Low batt</span><span class="val" id="slLow">--</span></div>
       <div class="row"><span class="lbl">Kontakt</span><span class="val" id="slSeen">--</span></div>
       <div class="row"><span class="lbl">Interval</span><span class="val" id="slInt">--</span></div>
     </div>
-
-    <!-- Controls -->
     <div class="card wide">
       <h3>Ovládání</h3>
       <div class="ctrl-group">
@@ -287,13 +162,6 @@ body {
           </div>
         </div>
         <div class="ctrl-row">
-          <span class="lbl">Spořič</span>
-          <div class="ctrl-btns">
-            <button class="cbtn" onclick="cmd('display',{cmd:'screensaver',value:'start'})">Start</button>
-            <button class="cbtn" onclick="cmd('display',{cmd:'screensaver',value:'stop'})">Stop</button>
-          </div>
-        </div>
-        <div class="ctrl-row">
           <span class="lbl">Dovolená</span>
           <div class="ctrl-btns">
             <button class="cbtn" id="cHolOn" onclick="cmd('sensor',{cmd:'holiday',value:true})">ON</button>
@@ -309,257 +177,205 @@ body {
         </div>
       </div>
     </div>
-
-    <!-- Log -->
     <div class="card wide">
       <h3>Log</h3>
       <div class="log" id="log"></div>
     </div>
-
   </div>
-
   <div class="disconnect-row">
     <button class="disconnect-btn" onclick="doDisconnect()">Odpojit</button>
   </div>
-
 </div>
 </div>
-
 <script>
-let client = null;
-let lastStatus = null;
+var client=null,lastStatus=null;
+var CO2_HIST_MAX=120,co2Hist=[];
 
-// ── Helpers ──
-function log(msg, cls) {
-  const el = document.getElementById('log');
-  const ts = new Date().toLocaleTimeString('cs');
-  el.innerHTML += '<div><span class="ts">' + ts + '</span> <span class="' + (cls||'') + '">' + msg + '</span></div>';
-  el.scrollTop = el.scrollHeight;
-  // Keep max 50 lines
-  while (el.children.length > 50) el.removeChild(el.firstChild);
-}
+function log(msg,c){var el=document.getElementById('log');var ts=new Date().toLocaleTimeString('cs');el.innerHTML+='<div><span class="ts">'+ts+'</span> <span class="'+(c||'')+'">'+msg+'</span></div>';el.scrollTop=el.scrollHeight;while(el.children.length>50)el.removeChild(el.firstChild)}
+function fmtTime(s){if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m'}
+function cls(el,c){el.className='val'+(c?' '+c:'')}
+function setBadge(ok){document.getElementById('badge').className='conn-badge'+(ok?' ok':'');document.getElementById('badgeText').textContent=ok?'Online':'Offline'}
 
-function fmtTime(s) {
-  if (s < 60) return s + 's';
-  if (s < 3600) return Math.floor(s/60) + 'm';
-  return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
-}
+function co2Level(ppm){if(ppm>=2000)return'level-alert';if(ppm>=1200)return'level-warn';if(ppm>=800)return'level-mid';return'level-ok'}
+function co2Color(ppm){if(ppm>=2000)return[248,113,113];if(ppm>=1200)return[249,115,22];if(ppm>=800)return[250,204,21];return[74,222,128]}
 
-function cls(el, c) { el.className = 'val' + (c ? ' ' + c : ''); }
+function drawMiniChart(){
+  var canvas=document.getElementById('miniChart');
+  if(!canvas||co2Hist.length<2)return;
+  var ctx=canvas.getContext('2d');
+  var dpr=window.devicePixelRatio||1;
+  var rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+  ctx.scale(dpr,dpr);
+  var w=rect.width,h=rect.height;
+  var pad={t:4,b:4,l:0,r:0};
+  var cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  ctx.clearRect(0,0,w,h);
+  var data=co2Hist,n=data.length;
+  var min=Math.min.apply(null,data),max=Math.max.apply(null,data);
+  if(max-min<50){min-=25;max+=25}
 
-function setBadge(ok) {
-  document.getElementById('badge').className = 'conn-badge' + (ok ? ' ok' : '');
-  document.getElementById('badgeText').textContent = ok ? 'Online' : 'Offline';
-}
-
-function trendArrow(score) {
-  const el = document.getElementById('tArrow');
-  if (score > 0.25) { el.textContent = '↑'; el.className = 'trend-arrow up'; }
-  else if (score < -0.25) { el.textContent = '↓'; el.className = 'trend-arrow down'; }
-  else { el.textContent = '→'; el.className = 'trend-arrow flat'; }
-}
-
-// ── MQTT handlers ──
-function onTelemetry(d) {
-  document.getElementById('hCo2').textContent = d.co2 || '--';
-  document.getElementById('hTemp').textContent = d.temp != null ? d.temp.toFixed(1) : '--';
-  document.getElementById('hHum').textContent = d.hum != null ? Math.round(d.hum) : '--';
-  if (d.trend != null) trendArrow(d.trend);
-
-  if (d.ts) {
-    const date = new Date(d.ts * 1000);
-    document.getElementById('tsBar').textContent = 'Aktualizace: ' + date.toLocaleTimeString('cs');
+  // ref lines
+  var refs=[1200,2000];
+  ctx.setLineDash([4,4]);ctx.lineWidth=0.5;
+  for(var r=0;r<refs.length;r++){
+    if(refs[r]>=min&&refs[r]<=max){
+      var ry=pad.t+ch-((refs[r]-min)/(max-min))*ch;
+      ctx.strokeStyle=refs[r]===2000?'rgba(248,113,113,0.3)':'rgba(249,115,22,0.3)';
+      ctx.beginPath();ctx.moveTo(pad.l,ry);ctx.lineTo(pad.l+cw,ry);ctx.stroke();
+    }
   }
-}
+  ctx.setLineDash([]);
 
-function onStatus(d) {
-  lastStatus = d;
-  const el = function(id) { return document.getElementById(id); };
+  var lastPpm=data[n-1];
+  var rgb=co2Color(lastPpm);
+  var baseStr='rgb('+rgb[0]+','+rgb[1]+','+rgb[2]+')';
 
-  var on = el('sOnline');
-  on.textContent = d.online ? 'Ano' : 'Ne';
-  cls(on, d.online ? 'ok' : 'err');
+  // gradient
+  var grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  grad.addColorStop(0,'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',0.25)');
+  grad.addColorStop(1,'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',0.02)');
 
-  el('sRssi').textContent = d.wifi_rssi ? d.wifi_rssi + ' dBm' : '--';
-
-  var oled = el('sOled');
-  oled.textContent = d.oled ? 'Aktivní' : 'Sleep';
-  cls(oled, d.oled ? 'ok' : '');
-
-  var night = el('sNight');
-  night.textContent = d.night_mode ? 'Ano' : 'Ne';
-  cls(night, d.night_mode ? 'warn' : '');
-
-  var hol = el('sHoliday');
-  hol.textContent = d.holiday ? 'Aktivní' : 'Ne';
-  cls(hol, d.holiday ? 'warn' : '');
-
-  el('sUptime').textContent = d.uptime_s != null ? fmtTime(d.uptime_s) : '--';
-
-  // Highlight active control buttons
-  if (d.oled != null) {
-    el('cOledOn').className = 'cbtn' + (d.oled ? ' active' : '');
-    el('cOledOff').className = 'cbtn' + (!d.oled ? ' active' : '');
+  // line
+  ctx.beginPath();
+  for(var i=0;i<n;i++){
+    var x=pad.l+(i/(n-1))*cw;
+    var y=pad.t+ch-((data[i]-min)/(max-min))*ch;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
   }
-  if (d.night_mode != null) {
-    el('cNightOn').className = 'cbtn' + (d.night_mode ? ' active' : '');
-    el('cNightOff').className = 'cbtn' + (!d.night_mode ? ' active' : '');
+  ctx.strokeStyle=baseStr;ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.stroke();
+
+  // fill
+  var lastX=pad.l+cw,lastY=pad.t+ch-((data[n-1]-min)/(max-min))*ch;
+  ctx.lineTo(lastX,pad.t+ch);ctx.lineTo(pad.l,pad.t+ch);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+
+  // dot
+  ctx.beginPath();ctx.arc(lastX,lastY,3,0,Math.PI*2);ctx.fillStyle=baseStr;ctx.fill();
+
+  // labels
+  ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='#3a3d4b';ctx.textAlign='right';
+  ctx.fillText(max,w-2,pad.t+10);ctx.fillText(min,w-2,h-pad.b);
+
+  document.getElementById('chartInfo').textContent=n+' vzorků (~'+Math.round(n*0.5)+' min)';
+}
+
+function onTelemetry(d){
+  document.getElementById('hCo2').textContent=d.co2||'--';
+  document.getElementById('hTemp').textContent=d.temp!=null?d.temp.toFixed(1):'--';
+  document.getElementById('hHum').textContent=d.hum!=null?Math.round(d.hum):'--';
+  if(d.trend!=null){
+    var el=document.getElementById('tArrow');
+    if(d.trend>0.25){el.textContent='↑';el.style.opacity='1'}
+    else if(d.trend<-0.25){el.textContent='↓';el.style.opacity='1'}
+    else{el.textContent='→';el.style.opacity='0.4'}
   }
-  if (d.holiday != null) {
-    el('cHolOn').className = 'cbtn' + (d.holiday ? ' active' : '');
-    el('cHolOff').className = 'cbtn' + (!d.holiday ? ' active' : '');
+  if(d.co2){
+    document.getElementById('heroCo2').className='hero-item hero-co2 '+co2Level(d.co2);
+    if(d.co2>0){co2Hist.push(d.co2);if(co2Hist.length>CO2_HIST_MAX)co2Hist.shift();drawMiniChart()}
   }
+  if(d.ts){document.getElementById('tsBar').textContent='Aktualizace: '+new Date(d.ts*1000).toLocaleTimeString('cs')}
 }
 
-function onSlaveStatus(d) {
-  var el = function(id) { return document.getElementById(id); };
-
-  var on = el('slOnline');
-  on.textContent = d.online ? 'Ano' : 'Ne';
-  cls(on, d.online ? 'ok' : 'err');
-
-  el('slBatt').textContent = d.battery_v != null ? d.battery_v.toFixed(2) + ' V' : '--';
-
-  var low = el('slLow');
-  low.textContent = d.low_battery ? 'Ano' : 'Ne';
-  cls(low, d.low_battery ? 'err' : 'ok');
-
-  el('slSeen').textContent = d.last_seen_s != null ? fmtTime(d.last_seen_s) + ' ago' : '--';
-  el('slInt').textContent = d.avg_interval_s != null ? d.avg_interval_s + 's' : '--';
+function onStatus(d){
+  lastStatus=d;
+  var el=function(id){return document.getElementById(id)};
+  var oled=el('sOled');oled.textContent=d.oled?'Aktivní':'Sleep';cls(oled,d.oled?'ok':'');
+  var night=el('sNight');night.textContent=d.night_mode?'Ano':'Ne';cls(night,d.night_mode?'warn':'');
+  var hol=el('sHoliday');hol.textContent=d.holiday?'Aktivní':'Ne';cls(hol,d.holiday?'warn':'');
+  el('sUptime').textContent=d.uptime_s!=null?fmtTime(d.uptime_s):'--';
+  if(d.oled!=null){el('cOledOn').className='cbtn'+(d.oled?' active':'');el('cOledOff').className='cbtn'+(!d.oled?' active':'')}
+  if(d.night_mode!=null){el('cNightOn').className='cbtn'+(d.night_mode?' active':'');el('cNightOff').className='cbtn'+(!d.night_mode?' active':'')}
+  if(d.holiday!=null){el('cHolOn').className='cbtn'+(d.holiday?' active':'');el('cHolOff').className='cbtn'+(!d.holiday?' active':'')}
 }
 
-function onAck(d) {
-  log('ACK: ' + d.cmd + ' → ' + d.status, d.status === 'ok' ? 'ok' : 'err');
+function onSlaveStatus(d){
+  var el=function(id){return document.getElementById(id)};
+  var on=el('slOnline');on.textContent=d.online?'Ano':'Ne';cls(on,d.online?'ok':'err');
+  var batt=el('slBatt');
+  if(d.battery_v!=null){batt.textContent=d.battery_v.toFixed(2)+' V';cls(batt,d.low_battery?'err':d.battery_v<3.5?'warn':'ok')}
+  el('slSeen').textContent=d.last_seen_s!=null?fmtTime(d.last_seen_s)+' ago':'--';
+  el('slInt').textContent=d.avg_interval_s!=null?d.avg_interval_s+'s':'--';
 }
 
-// ── LocalStorage helpers ──
-function saveConfig(host, port, user, pass) {
-  try {
-    localStorage.setItem('co2_mqtt', JSON.stringify({ host: host, port: port, user: user, pass: btoa(pass) }));
-  } catch(e) {}
+function onAck(d){log('ACK: '+d.cmd+' → '+d.status,d.status==='ok'?'ok':'err')}
+
+function saveConfig(h,p,u,pw){try{localStorage.setItem('co2_mqtt',JSON.stringify({host:h,port:p,user:u,pass:btoa(pw)}))}catch(e){}}
+function loadConfig(){try{var c=JSON.parse(localStorage.getItem('co2_mqtt')||'{}');if(c.pass)c.pass=atob(c.pass);return c}catch(e){return{}}}
+
+function doConnect(){
+  var host=document.getElementById('lHost').value.trim();
+  var port=document.getElementById('lPort').value.trim()||'8884';
+  var user=document.getElementById('lUser').value.trim();
+  var pass=document.getElementById('lPass').value;
+  var errEl=document.getElementById('loginErr');
+  if(!host||!user||!pass){errEl.textContent='Vyplň všechna pole';return}
+  errEl.textContent='Připojuji...';
+  saveConfig(host,port,user,pass);
+  connectMqtt(host,port,user,pass);
 }
 
-function loadConfig() {
-  try {
-    var cfg = JSON.parse(localStorage.getItem('co2_mqtt') || '{}');
-    if (cfg.pass) cfg.pass = atob(cfg.pass);
-    return cfg;
-  } catch(e) { return {}; }
-}
-
-function clearConfig() {
-  try { localStorage.removeItem('co2_mqtt'); } catch(e) {}
-}
-
-// ── Connect ──
-function doConnect() {
-  var host = document.getElementById('lHost').value.trim();
-  var port = document.getElementById('lPort').value.trim() || '8884';
-  var user = document.getElementById('lUser').value.trim();
-  var pass = document.getElementById('lPass').value;
-  var errEl = document.getElementById('loginErr');
-
-  if (!host || !user || !pass) {
-    errEl.textContent = 'Vyplň všechna pole';
-    return;
-  }
-  errEl.textContent = 'Připojuji...';
-
-  saveConfig(host, port, user, pass);
-  connectMqtt(host, port, user, pass);
-}
-
-function connectMqtt(host, port, user, pass) {
-  var url = 'wss://' + host + ':' + port + '/mqtt';
-
-  client = mqtt.connect(url, {
-    username: user,
-    password: pass,
-    clientId: 'co2remote-' + Math.random().toString(16).slice(2, 8),
-    clean: true,
-    connectTimeout: 10000,
-    reconnectPeriod: 5000,
-    protocolVersion: 4,
-  });
-
-  client.on('connect', function() {
-    document.getElementById('loginErr').textContent = '';
+function connectMqtt(host,port,user,pass){
+  var url='wss://'+host+':'+port+'/mqtt';
+  client=mqtt.connect(url,{username:user,password:pass,clientId:'co2r-'+Math.random().toString(16).slice(2,8),clean:true,connectTimeout:10000,reconnectPeriod:5000,protocolVersion:4});
+  client.on('connect',function(){
+    document.getElementById('loginErr').textContent='';
     document.getElementById('loginView').classList.add('hidden');
     document.getElementById('dashView').classList.remove('hidden');
-    setBadge(true);
-    log('MQTT připojeno', 'ok');
-
+    setBadge(true);log('MQTT připojeno','ok');
     client.subscribe('co2monitor/telemetry');
     client.subscribe('co2monitor/status');
     client.subscribe('co2monitor/slave/status');
     client.subscribe('co2monitor/cmd/ack');
   });
-
-  client.on('message', function(topic, payload) {
-    var data;
-    try { data = JSON.parse(payload.toString()); } catch(e) { return; }
-
-    if (topic === 'co2monitor/telemetry') onTelemetry(data);
-    else if (topic === 'co2monitor/status') onStatus(data);
-    else if (topic === 'co2monitor/slave/status') onSlaveStatus(data);
-    else if (topic === 'co2monitor/cmd/ack') onAck(data);
+  client.on('message',function(topic,payload){
+    var data;try{data=JSON.parse(payload.toString())}catch(e){return}
+    if(topic==='co2monitor/telemetry')onTelemetry(data);
+    else if(topic==='co2monitor/status')onStatus(data);
+    else if(topic==='co2monitor/slave/status')onSlaveStatus(data);
+    else if(topic==='co2monitor/cmd/ack')onAck(data);
   });
-
-  client.on('close', function() {
-    setBadge(false);
+  client.on('close',function(){setBadge(false)});
+  client.on('error',function(err){
+    var errEl=document.getElementById('loginErr');
+    if(errEl)errEl.textContent='Chyba: '+err.message;
+    log('Chyba: '+err.message,'err');
   });
-
-  client.on('error', function(err) {
-    var errEl = document.getElementById('loginErr');
-    if (errEl) errEl.textContent = 'Chyba: ' + err.message;
-    log('Chyba: ' + err.message, 'err');
-  });
-
-  client.on('reconnect', function() {
-    log('Reconnect...', '');
-  });
+  client.on('reconnect',function(){log('Reconnect...','')});
 }
 
-// ── Disconnect ──
-function doDisconnect() {
-  if (client) {
-    client.end(true);
-    client = null;
-  }
-  lastStatus = null;
+function doDisconnect(){
+  if(client){client.end(true);client=null}
+  lastStatus=null;co2Hist=[];
   setBadge(false);
   document.getElementById('dashView').classList.add('hidden');
   document.getElementById('loginView').classList.remove('hidden');
 }
 
-// ── Send command ──
-function cmd(category, payload) {
-  if (!client || !client.connected) {
-    log('MQTT offline', 'err');
-    return;
-  }
-  var topic = 'co2monitor/cmd/' + category;
-  var msg = JSON.stringify(payload);
-  client.publish(topic, msg, { qos: 1 });
-  log('→ ' + payload.cmd + (payload.value !== undefined ? ': ' + payload.value : ''), '');
+function cmd(cat,payload){
+  if(!client||!client.connected){log('MQTT offline','err');return}
+  client.publish('co2monitor/cmd/'+cat,JSON.stringify(payload),{qos:1});
+  log('→ '+payload.cmd+(payload.value!==undefined?': '+payload.value:''),'');
 }
 
-// ── Init ──
-var cfg = loadConfig();
-if (cfg.host) {
-  document.getElementById('lHost').value = cfg.host;
-  document.getElementById('lPort').value = cfg.port || '8884';
-  document.getElementById('lUser').value = cfg.user || '';
-  document.getElementById('lPass').value = cfg.pass || '';
-  if (cfg.pass) {
-    document.getElementById('savedNote').textContent = 'Uložené přihlášení — klikni Připojit';
-  }
+var resizeTimer=0;
+window.addEventListener('resize',function(){clearTimeout(resizeTimer);resizeTimer=setTimeout(drawMiniChart,200)});
+
+// ── Auto-connect ──
+var cfg=loadConfig();
+if(cfg.host&&cfg.user&&cfg.pass){
+  document.getElementById('lHost').value=cfg.host;
+  document.getElementById('lPort').value=cfg.port||'8884';
+  document.getElementById('lUser').value=cfg.user;
+  document.getElementById('lPass').value=cfg.pass;
+  connectMqtt(cfg.host,cfg.port||'8884',cfg.user,cfg.pass);
+}else{
+  if(cfg.host)document.getElementById('lHost').value=cfg.host;
+  if(cfg.port)document.getElementById('lPort').value=cfg.port||'8884';
+  if(cfg.user)document.getElementById('lUser').value=cfg.user;
 }
 
-// ── Service Worker ──
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function() {});
-}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
 </script>
 </body>
 </html>
