@@ -65,12 +65,14 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .ctrl-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border)}
 .ctrl-row:first-child{border-top:none}
 .ctrl-row .lbl{font-size:13px}
-.ctrl-btns{display:flex;gap:6px}
+.ctrl-btns{display:flex;gap:6px;flex-wrap:wrap}
 .cbtn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif;-webkit-tap-highlight-color:transparent}
 .cbtn:active{transform:scale(0.95);background:#151520}
 .cbtn.active{background:#1e3a5f;border-color:var(--accent);color:var(--accent)}
 .cbtn.danger{border-color:#3a1a1a}
 .cbtn.danger:active{background:#2a1010;border-color:var(--red);color:var(--red)}
+.mode-label{font-size:10px;color:var(--dim);margin-top:4px;text-align:right}
+.mode-label.manual{color:var(--yellow)}
 .log{margin-top:8px;padding:8px;background:#08080e;border:1px solid var(--border);border-radius:8px;max-height:100px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);line-height:1.5}
 .log .ts{color:#3a3d4b}.log .ok{color:var(--green)}.log .err{color:var(--red)}
 .disconnect-row{margin-top:14px;text-align:center;padding-top:14px;border-top:1px solid var(--border)}
@@ -131,7 +133,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="card">
       <h3>Master</h3>
       <div class="row"><span class="lbl">OLED</span><span class="val" id="sOled">--</span></div>
-      <div class="row"><span class="lbl">Noční</span><span class="val" id="sNight">--</span></div>
+      <div class="row"><span class="lbl">Režim</span><span class="val" id="sMode">--</span></div>
       <div class="row"><span class="lbl">Dovolená</span><span class="val" id="sHoliday">--</span></div>
       <div class="row"><span class="lbl">Uptime</span><span class="val" id="sUptime">--</span></div>
     </div>
@@ -140,25 +142,33 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="row"><span class="lbl">Online</span><span class="val" id="slOnline">--</span></div>
       <div class="row"><span class="lbl">Baterie</span><span class="val" id="slBatt">--</span></div>
       <div class="row"><span class="lbl">Kontakt</span><span class="val" id="slSeen">--</span></div>
-      <div class="row"><span class="lbl">Interval</span><span class="val" id="slInt">--</span></div>
+      <div class="row"><span class="lbl">Avg interval</span><span class="val" id="slInt">--</span></div>
+      <div class="row"><span class="lbl">Oček. interval</span><span class="val" id="slExpInt">--</span></div>
     </div>
     <div class="card wide">
       <h3>Ovládání</h3>
       <div class="ctrl-group">
         <div class="ctrl-row">
-          <span class="lbl">OLED</span>
-          <div class="ctrl-btns">
-            <button class="cbtn" id="cOledOn" onclick="cmd('display',{cmd:'oled',value:true})">ON</button>
-            <button class="cbtn" id="cOledOff" onclick="cmd('display',{cmd:'oled',value:false})">OFF</button>
-            <button class="cbtn" id="cOledAuto" onclick="cmd('display',{cmd:'oled',value:'auto'})">AUTO</button>
+          <span class="lbl">Režim</span>
+          <div>
+            <div class="ctrl-btns">
+              <button class="cbtn" id="cDay" onclick="cmd('display',{cmd:'night_mode',value:'day'})">DAY</button>
+              <button class="cbtn" id="cNight" onclick="cmd('display',{cmd:'night_mode',value:'night'})">NIGHT</button>
+              <button class="cbtn" id="cAutoDN" onclick="cmd('display',{cmd:'night_mode',value:'auto_dn'})">AUTO:D/N</button>
+              <button class="cbtn" id="cAutoP" onclick="cmd('display',{cmd:'night_mode',value:'auto_p'})">AUTO:P</button>
+            </div>
+            <div class="mode-label" id="modeLabel"></div>
           </div>
         </div>
         <div class="ctrl-row">
-          <span class="lbl">Den/Noc</span>
-          <div class="ctrl-btns">
-            <button class="cbtn" id="cNightOff" onclick="cmd('display',{cmd:'night_mode',value:false})">DAY</button>
-            <button class="cbtn" id="cNightOn" onclick="cmd('display',{cmd:'night_mode',value:true})">NIGHT</button>
-            <button class="cbtn" id="cNightAuto" onclick="cmd('display',{cmd:'night_mode',value:'auto'})">AUTO</button>
+          <span class="lbl">OLED</span>
+          <div>
+            <div class="ctrl-btns">
+              <button class="cbtn" id="cOledOn" onclick="cmd('display',{cmd:'oled',value:true})">ON</button>
+              <button class="cbtn" id="cOledOff" onclick="cmd('display',{cmd:'oled',value:false})">OFF</button>
+              <button class="cbtn" id="cOledAuto" onclick="cmd('display',{cmd:'oled',value:'auto'})">AUTO</button>
+            </div>
+            <div class="mode-label" id="oledLabel"></div>
           </div>
         </div>
         <div class="ctrl-row">
@@ -199,6 +209,8 @@ function setBadge(ok){document.getElementById('badge').className='conn-badge'+(o
 function co2Level(ppm){if(ppm>=2000)return'level-alert';if(ppm>=1200)return'level-warn';if(ppm>=800)return'level-mid';return'level-ok'}
 function co2Color(ppm){if(ppm>=2000)return[248,113,113];if(ppm>=1200)return[249,115,22];if(ppm>=800)return[250,204,21];return[74,222,128]}
 
+var modeNames={day:'DAY (manual)',night:'NIGHT (manual)',auto_dn:'AUTO: D/N',auto_p:'AUTO: Presence'};
+
 function drawMiniChart(){
   var canvas=document.getElementById('miniChart');
   if(!canvas||co2Hist.length<2)return;
@@ -215,7 +227,6 @@ function drawMiniChart(){
   var min=Math.min.apply(null,data),max=Math.max.apply(null,data);
   if(max-min<50){min-=25;max+=25}
 
-  // ref lines
   var refs=[1200,2000];
   ctx.setLineDash([4,4]);ctx.lineWidth=0.5;
   for(var r=0;r<refs.length;r++){
@@ -231,12 +242,10 @@ function drawMiniChart(){
   var rgb=co2Color(lastPpm);
   var baseStr='rgb('+rgb[0]+','+rgb[1]+','+rgb[2]+')';
 
-  // gradient
   var grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
   grad.addColorStop(0,'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',0.25)');
   grad.addColorStop(1,'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',0.02)');
 
-  // line
   ctx.beginPath();
   for(var i=0;i<n;i++){
     var x=pad.l+(i/(n-1))*cw;
@@ -245,15 +254,12 @@ function drawMiniChart(){
   }
   ctx.strokeStyle=baseStr;ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.stroke();
 
-  // fill
   var lastX=pad.l+cw,lastY=pad.t+ch-((data[n-1]-min)/(max-min))*ch;
   ctx.lineTo(lastX,pad.t+ch);ctx.lineTo(pad.l,pad.t+ch);ctx.closePath();
   ctx.fillStyle=grad;ctx.fill();
 
-  // dot
   ctx.beginPath();ctx.arc(lastX,lastY,3,0,Math.PI*2);ctx.fillStyle=baseStr;ctx.fill();
 
-  // labels
   ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='#3a3d4b';ctx.textAlign='right';
   ctx.fillText(max,w-2,pad.t+10);ctx.fillText(min,w-2,h-pad.b);
 
@@ -280,13 +286,44 @@ function onTelemetry(d){
 function onStatus(d){
   lastStatus=d;
   var el=function(id){return document.getElementById(id)};
+
+  // OLED
   var oled=el('sOled');oled.textContent=d.oled?'Aktivní':'Sleep';cls(oled,d.oled?'ok':'');
-  var night=el('sNight');night.textContent=d.night_mode?'Ano':'Ne';cls(night,d.night_mode?'warn':'');
-  var hol=el('sHoliday');hol.textContent=d.holiday?'Aktivní':'Ne';cls(hol,d.holiday?'warn':'');
-  el('sUptime').textContent=d.uptime_s!=null?fmtTime(d.uptime_s):'--';
   if(d.oled!=null){el('cOledOn').className='cbtn'+(d.oled?' active':'');el('cOledOff').className='cbtn'+(!d.oled?' active':'')}
-  if(d.night_mode!=null){el('cNightOn').className='cbtn'+(d.night_mode?' active':'');el('cNightOff').className='cbtn'+(!d.night_mode?' active':'')}
+
+  // Mode
+  var mode=d.mode||'auto_p';
+  var sMode=el('sMode');
+  sMode.textContent=modeNames[mode]||mode;
+  cls(sMode,(mode==='day'||mode==='night')?'warn':'');
+  el('cDay').className='cbtn'+(mode==='day'?' active':'');
+  el('cNight').className='cbtn'+(mode==='night'?' active':'');
+  el('cAutoDN').className='cbtn'+(mode==='auto_dn'?' active':'');
+  el('cAutoP').className='cbtn'+(mode==='auto_p'?' active':'');
+  var ml=el('modeLabel');
+  if(mode==='day'||mode==='night'){ml.textContent='Manual';ml.className='mode-label manual';}
+  else if(mode==='auto_dn'){ml.textContent='Auto (bez detekce)';ml.className='mode-label manual';}
+  else{ml.textContent='Auto';ml.className='mode-label';}
+
+  // OLED auto detection
+  var oledAuto=!d.presence_override;
+  el('cOledAuto').className='cbtn'+((!d.oled&&oledAuto)?'':oledAuto?' active':'');
+
+  var oledLbl=el('oledLabel');
+  // We don't get manual_oled_ovr from MQTT status, so approximate from oled + mode
+  oledLbl.textContent='';
+
+  // Holiday
+  var hol=el('sHoliday');hol.textContent=d.holiday?'Aktivní':'Ne';cls(hol,d.holiday?'warn':'');
   if(d.holiday!=null){el('cHolOn').className='cbtn'+(d.holiday?' active':'');el('cHolOff').className='cbtn'+(!d.holiday?' active':'')}
+
+  // Uptime
+  el('sUptime').textContent=d.uptime_s!=null?fmtTime(d.uptime_s):'--';
+
+  // Expected interval
+  if(d.slave_sleep_ms!=null){
+    el('slExpInt').textContent=(d.slave_sleep_ms/1000)+'s';
+  }
 }
 
 function onSlaveStatus(d){
@@ -361,7 +398,6 @@ function cmd(cat,payload){
 var resizeTimer=0;
 window.addEventListener('resize',function(){clearTimeout(resizeTimer);resizeTimer=setTimeout(drawMiniChart,200)});
 
-// ── Auto-connect ──
 var cfg=loadConfig();
 if(cfg.host&&cfg.user&&cfg.pass){
   document.getElementById('lHost').value=cfg.host;
