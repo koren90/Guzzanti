@@ -133,8 +133,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="card">
       <h3>Master</h3>
       <div class="row"><span class="lbl">OLED</span><span class="val" id="sOled">--</span></div>
+      <div class="row"><span class="lbl">Stav</span><span class="val" id="sState">--</span></div>
       <div class="row"><span class="lbl">Režim</span><span class="val" id="sMode">--</span></div>
-      <div class="row"><span class="lbl">Dovolená</span><span class="val" id="sHoliday">--</span></div>
       <div class="row"><span class="lbl">Uptime</span><span class="val" id="sUptime">--</span></div>
     </div>
     <div class="card">
@@ -291,6 +291,13 @@ function onStatus(d){
   var oled=el('sOled');oled.textContent=d.oled?'Aktivní':'Sleep';cls(oled,d.oled?'ok':'');
   if(d.oled!=null){el('cOledOn').className='cbtn'+(d.oled?' active':'');el('cOledOff').className='cbtn'+(!d.oled?' active':'')}
 
+  // Stav (slave mode) — replaces Holiday
+  var stEl=el('sState');
+  var sm=d.slave_mode||'--';
+  var stColors={FAST:'ok',NORMAL:'',SLOW:'',AWAY:'err',NIGHT:'warn',HOLIDAY:'warn'};
+  stEl.textContent=sm+(d.slave_sleep_ms!=null?' ('+(d.slave_sleep_ms/1000)+'s)':'');
+  cls(stEl,stColors[sm]||'');
+
   // Mode
   var mode=d.mode||'auto_p';
   var sMode=el('sMode');
@@ -310,15 +317,13 @@ function onStatus(d){
   el('cOledAuto').className='cbtn'+((!d.oled&&oledAuto)?'':oledAuto?' active':'');
 
   var oledLbl=el('oledLabel');
-  // We don't get manual_oled_ovr from MQTT status, so approximate from oled + mode
   oledLbl.textContent='';
-
-  // Holiday
-  var hol=el('sHoliday');hol.textContent=d.holiday?'Aktivní':'Ne';cls(hol,d.holiday?'warn':'');
-  if(d.holiday!=null){el('cHolOn').className='cbtn'+(d.holiday?' active':'');el('cHolOff').className='cbtn'+(!d.holiday?' active':'')}
 
   // Uptime
   el('sUptime').textContent=d.uptime_s!=null?fmtTime(d.uptime_s):'--';
+
+  // Holiday buttons
+  if(d.holiday!=null){el('cHolOn').className='cbtn'+(d.holiday?' active':'');el('cHolOff').className='cbtn'+(!d.holiday?' active':'')}
 
   // Expected interval
   if(d.slave_sleep_ms!=null){
