@@ -151,7 +151,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
         <div class="ctrl-row">
           <span class="lbl">Režim</span>
           <div>
-            <div class="ctrl-btns">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
               <button class="cbtn" id="cDay" onclick="cmd('display',{cmd:'night_mode',value:'day'})">DAY</button>
               <button class="cbtn" id="cNight" onclick="cmd('display',{cmd:'night_mode',value:'night'})">NIGHT</button>
               <button class="cbtn" id="cAutoDN" onclick="cmd('display',{cmd:'night_mode',value:'auto_dn'})">AUTO:D/N</button>
@@ -182,6 +182,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
           <span class="lbl">Systém</span>
           <div class="ctrl-btns">
             <button class="cbtn" onclick="cmd('system',{cmd:'sync_ntp'})">NTP</button>
+            <button class="cbtn danger" onclick="if(confirm('Vypnout MQTT? Ovládání bude možné jen přes web/serial.'))cmd('system',{cmd:'mqtt_off'})">MQTT Off</button>
             <button class="cbtn danger" onclick="if(confirm('Restart master?'))cmd('system',{cmd:'restart'})">Restart</button>
           </div>
         </div>
@@ -294,7 +295,7 @@ function onStatus(d){
   // Stav (slave mode) — replaces Holiday
   var stEl=el('sState');
   var sm=d.slave_mode||'--';
-  var stColors={FAST:'ok',NORMAL:'',SLOW:'',AWAY:'err',NIGHT:'warn',HOLIDAY:'warn'};
+  var stColors={FAST:'err',NORMAL:'warn',SLOW:'ok',AWAY:'',NIGHT:'',HOLIDAY:'warn'};
   stEl.textContent=sm+(d.slave_sleep_ms!=null?' ('+(d.slave_sleep_ms/1000)+'s)':'');
   cls(stEl,stColors[sm]||'');
 

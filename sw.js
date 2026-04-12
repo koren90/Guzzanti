@@ -1,4 +1,4 @@
-const CACHE = 'co2remote-v3';
+const CACHE = 'co2remote-v4';
 const ASSETS = [
   './',
   './index.html',
