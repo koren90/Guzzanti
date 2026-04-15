@@ -208,14 +208,22 @@ async function loadData() {
 
 async function saveData(newData) {
   try {
-    await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}`, {
-      method: 'PUT', headers: headers(), body: JSON.stringify(newData),
+    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}`, {
+      method: 'PUT',
+      headers: { ...headers(), 'X-Bin-Versioning': 'false' },
+      body: JSON.stringify(newData),
     });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      console.error('Save error:', r.status, err);
+      showToast('Chyba: ' + (err.message || r.statusText || r.status));
+      return false;
+    }
     setState({ data: newData });
     return true;
   } catch (e) {
     console.error('Save error:', e);
-    showToast('Chyba při ukládání!');
+    showToast('Chyba sítě při ukládání!');
     return false;
   }
 }
@@ -292,7 +300,8 @@ function addOwnDrink() {
 
 async function submitVote() {
   if (state.picks.length === 0) { showToast('Vyber nebo přidej alespoň 1 nápoj!'); return; }
-  if (!state.currentUser) return;
+  if (!state.currentUser || state.submitting) return;
+  setState({ submitting: true });
   const userId = state.currentUser.id;
   const userName = state.currentUser.name;
   const picks = [...state.picks];
@@ -310,8 +319,10 @@ async function submitVote() {
   });
 
   if (ok) {
-    setState({ picks: [], currentUser: null, tab: 'results' });
+    setState({ picks: [], currentUser: null, tab: 'results', submitting: false });
     showToast('🎉 Díky za hlas!');
+  } else {
+    setState({ submitting: false });
   }
 }
 
@@ -527,7 +538,7 @@ function renderVote() {
 
   // Existing drinks grid
   if (data.drinks.length > 0) {
-    content.appendChild(h('p', { className: 'pick-hint' }, 'Nebo hlasuj pro existující nápoje:'));
+    content.appendChild(h('p', { className: 'pick-hint' }, 'Nebo hlasuj pro existující nápoje (stačí i 1):'));
     const grid = h('div', { className: 'grid' });
     data.drinks.forEach((drink, i) => {
       const sel = picks.includes(drink);
@@ -557,11 +568,12 @@ function renderVote() {
     ));
   }
 
+  const isSubmitting = state.submitting;
   content.appendChild(h('button', {
     className: 'btn btn-p w-full mt-md',
-    style: { opacity: picks.length === 0 ? '.5' : '1' },
-    onClick: submitVote, disabled: picks.length === 0,
-  }, 'Odeslat hlas 🗳'));
+    style: { opacity: (picks.length === 0 || isSubmitting) ? '.5' : '1' },
+    onClick: submitVote, disabled: picks.length === 0 || isSubmitting,
+  }, isSubmitting ? '⏳ Ukládám hlasy…' : 'Odeslat hlas 🗳'));
 
   return content;
 }
@@ -607,17 +619,6 @@ function renderResults() {
     ));
   });
   content.appendChild(list);
-
-  // Voters detail
-  if (data.voters.length > 0) {
-    const det = h('details', null, h('summary', null, `Kdo hlasoval (${data.voters.length})`));
-    const dl = h('div', { className: 'det-list' });
-    data.voters.forEach(v => {
-      dl.appendChild(h('div', { className: 'det-item' }, h('strong', null, v.name), ': ', (v.picks || []).join(', ')));
-    });
-    det.appendChild(dl);
-    content.appendChild(det);
-  }
 
   // Refresh button
   content.appendChild(h('button', { className: 'btn btn-sec w-full mt-md', onClick: () => { setState({ loading: true }); loadData(); } }, '🔄 Obnovit výsledky'));
