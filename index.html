@@ -198,11 +198,22 @@ const headers = () => ({
 async function loadData() {
   try {
     const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+    if (!r.ok) {
+      console.error('Load error:', r.status);
+      setState({ data: null, loading: false, loadError: true });
+      showToast('Nepodařilo se načíst data. Zkuste obnovit stránku.');
+      return;
+    }
     const json = await r.json();
-    setState({ data: json.record || INIT_DATA, loading: false });
+    if (!json.record) {
+      setState({ data: INIT_DATA, loading: false, loadError: false });
+      return;
+    }
+    setState({ data: json.record, loading: false, loadError: false });
   } catch (e) {
     console.error('Load error:', e);
-    setState({ data: INIT_DATA, loading: false });
+    setState({ data: null, loading: false, loadError: true });
+    showToast('Chyba sítě. Zkuste obnovit stránku.');
   }
 }
 
@@ -232,14 +243,22 @@ async function saveData(newData) {
 async function safeUpdate(updateFn) {
   try {
     const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+    if (!r.ok) {
+      showToast('Nepodařilo se ověřit aktuální data. Zkuste to znovu.');
+      return false;
+    }
     const json = await r.json();
-    const fresh = json.record || INIT_DATA;
+    if (!json.record) {
+      showToast('Bin je prázdný — nelze uložit.');
+      return false;
+    }
+    const fresh = json.record;
     const updated = updateFn(fresh);
     if (!updated) return false;
     return await saveData(updated);
   } catch (e) {
     console.error('Safe update error:', e);
-    showToast('Chyba při ukládání!');
+    showToast('Chyba sítě při ukládání!');
     return false;
   }
 }
@@ -428,6 +447,15 @@ function render() {
     app.appendChild(h('div', { className: 'loading' },
       h('div', { className: 'loading-icon' }, '🧊'),
       h('p', { className: 'loading-text' }, 'Načítám anketu…'),
+    ));
+    return;
+  }
+
+  if (!state.data) {
+    app.appendChild(h('div', { className: 'loading' },
+      h('div', { className: 'loading-icon' }, '⚠️'),
+      h('p', { className: 'loading-text' }, 'Nepodařilo se načíst data.'),
+      h('button', { className: 'btn btn-p mt-md', onClick: () => { setState({ loading: true }); loadData(); } }, '🔄 Zkusit znovu'),
     ));
     return;
   }
