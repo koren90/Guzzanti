@@ -423,7 +423,8 @@ function h(tag, attrs, ...children) {
     if (k === 'className') el.className = v;
     else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
     else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
-    else if (typeof v === 'boolean') { if (v) el.setAttribute(k, ''); else el.removeAttribute(k); }
+    else if (v == null || v === false) el.removeAttribute(k);
+    else if (v === true) el.setAttribute(k, '');
     else el.setAttribute(k, v);
   });
   children.flat(Infinity).forEach(c => {
