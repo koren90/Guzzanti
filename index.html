@@ -59,6 +59,9 @@ body {
 .btn-sec { background: #fff; border: 2px solid var(--slate-200); color: var(--slate-500); font-weight: 600; font-size: 13px; padding: 8px 16px; }
 .btn-tiny { padding: 4px 10px; border-radius: 8px; border: 1px solid var(--slate-300); background: #fff; color: var(--slate-500); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-rm { background: var(--red-50); border: none; border-radius: 8px; width: 28px; height: 28px; cursor: pointer; color: var(--red-500); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.btn-move { background: var(--slate-100); border: none; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; color: var(--slate-500); font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; }
+.btn-move:active { background: var(--slate-200); }
+.btn-edit { background: var(--sky-50); border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; }
 .btn-danger { background: var(--red-500); color: #fff; padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
 .w-full { width: 100%; }
 .mt-sm { margin-top: 14px; }
@@ -403,6 +406,51 @@ async function adminRemoveDrink(drink) {
     voters: f.voters.map(v => ({ ...v, picks: (v.picks || []).filter(p => p !== drink) })),
   }));
   showToast(`🗑 ${drink} odstraněn.`);
+}
+
+async function adminRenameDrink(oldName) {
+  const newName = prompt('Nový název nápoje:', oldName);
+  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+  const trimmed = newName.trim();
+  if (state.data.drinks.some(d => d !== oldName && norm(d) === norm(trimmed))) {
+    showToast('Nápoj s tímto názvem už existuje.'); return;
+  }
+  await safeUpdate(f => {
+    const drinks = f.drinks.map(d => d === oldName ? trimmed : d);
+    const votes = {};
+    Object.entries(f.votes).forEach(([k, v]) => { votes[k === oldName ? trimmed : k] = v; });
+    const voters = f.voters.map(v => ({
+      ...v, picks: (v.picks || []).map(p => p === oldName ? trimmed : p),
+    }));
+    return { ...f, drinks, votes, voters };
+  });
+  showToast(`✅ Přejmenováno na „${trimmed}".`);
+}
+
+async function adminMoveDrink(index, dir) {
+  const newIndex = index + dir;
+  if (newIndex < 0 || newIndex >= state.data.drinks.length) return;
+  await safeUpdate(f => {
+    const drinks = [...f.drinks];
+    [drinks[index], drinks[newIndex]] = [drinks[newIndex], drinks[index]];
+    return { ...f, drinks };
+  });
+}
+
+function adminExportCSV() {
+  const { data } = state;
+  const sorted = [...data.drinks].sort((a, b) => (data.votes[b] || 0) - (data.votes[a] || 0));
+  const lines = ['Nápoj;Hlasů'];
+  sorted.forEach(d => { lines.push(`${d};${data.votes[d] || 0}`); });
+  lines.push('');
+  lines.push(`Celkem hlasujících;${data.voters.length}`);
+  lines.push(`Celkem hlasů;${Object.values(data.votes).reduce((a, b) => a + b, 0)}`);
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'anketa-lednice.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 CSV exportováno.');
 }
 
 async function adminRemoveVoter(voterId) {
@@ -759,9 +807,17 @@ function renderAdmin() {
   if (data.drinks.length > 0) {
     const dl = h('div', { className: 'a-list' });
     data.drinks.forEach((d, i) => {
+      const btns = h('div', { style: { display: 'flex', gap: '4px', flexShrink: '0' } });
+      if (i > 0) btns.appendChild(h('button', { className: 'btn-move', onClick: () => adminMoveDrink(i, -1), title: 'Nahoru' }, '▲'));
+      else btns.appendChild(h('span', { className: 'btn-move', style: { opacity: '0', pointerEvents: 'none' } }, '▲'));
+      if (i < data.drinks.length - 1) btns.appendChild(h('button', { className: 'btn-move', onClick: () => adminMoveDrink(i, 1), title: 'Dolů' }, '▼'));
+      else btns.appendChild(h('span', { className: 'btn-move', style: { opacity: '0', pointerEvents: 'none' } }, '▼'));
+      btns.appendChild(h('button', { className: 'btn-edit', onClick: () => adminRenameDrink(d), title: 'Přejmenovat' }, '✏️'));
+      btns.appendChild(h('button', { className: 'btn-rm', onClick: () => adminRemoveDrink(d), title: 'Smazat' }, '✕'));
       dl.appendChild(h('div', { className: 'a-item' },
-        h('span', null, `${emoji(i)} ${d} `, h('span', { className: 'a-vote-count' }, `(${data.votes[d] || 0})`)),
-        h('button', { className: 'btn-rm', onClick: () => adminRemoveDrink(d) }, '✕')));
+        h('span', { style: { flex: '1', minWidth: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
+          `${emoji(i)} ${d} `, h('span', { className: 'a-vote-count' }, `(${data.votes[d] || 0})`)),
+        btns));
     });
     drinksBlock.appendChild(dl);
   }
@@ -825,6 +881,15 @@ function renderAdmin() {
   pinBlock.appendChild(h('div', { className: 'row' }, newPinIn,
     h('button', { className: 'btn btn-p', onClick: adminChangePin }, 'Změnit')));
   content.appendChild(pinBlock);
+
+  // ── Export ──
+  if (data.drinks.length > 0) {
+    const exportBlock = h('div', { className: 'admin-block' },
+      h('p', { className: 'admin-title' }, '📥 Export výsledků'),
+      h('button', { className: 'btn btn-sec', onClick: adminExportCSV }, '📥 Stáhnout CSV'),
+    );
+    content.appendChild(exportBlock);
+  }
 
   // ── Danger zone ──
   content.appendChild(h('div', { className: 'danger' },
