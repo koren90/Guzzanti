@@ -163,7 +163,6 @@ details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; fon
 const CONFIG = {
   JSONBIN_BIN_ID:   '69df97d436566621a8b7a916',
   JSONBIN_API_KEY:  '$2a$10$1PoDSoz3RJq6vxaq.jRw2Oc0j/L8AH9ZxVr98dl7FSQ6dMwXJuAD2',
-  ADMIN_PIN:        'lednice2026',
   MAX_PICKS:        3,
 };
 // ════════════════════════════════════════════════════════════
@@ -171,7 +170,7 @@ const CONFIG = {
 const EMOJIS = ['🥤','🧃','🍺','☕','🫧','🍹','🧊','💧','🍋','🫖','🥛','🍵','🫗','🍷','🥂','🧋'];
 const emoji = i => EMOJIS[i % EMOJIS.length];
 const norm = s => s.trim().toLowerCase().replace(/\s+/g, ' ');
-const INIT_DATA = { drinks: [], votes: {}, voters: [], users: [] };
+const INIT_DATA = { drinks: [], votes: {}, voters: [], users: [], adminPin: 'lednice2026' };
 
 // ── State ──
 let state = {
@@ -209,7 +208,9 @@ async function loadData() {
       setState({ data: INIT_DATA, loading: false, loadError: false });
       return;
     }
-    setState({ data: json.record, loading: false, loadError: false });
+    const rec = json.record;
+    if (!rec.adminPin) rec.adminPin = 'lednice2026';
+    setState({ data: rec, loading: false, loadError: false });
   } catch (e) {
     console.error('Load error:', e);
     setState({ data: null, loading: false, loadError: true });
@@ -240,27 +241,62 @@ async function saveData(newData) {
 }
 
 // Re-read before write to avoid overwriting concurrent changes
-async function safeUpdate(updateFn) {
-  try {
-    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
-    if (!r.ok) {
-      showToast('Nepodařilo se ověřit aktuální data. Zkuste to znovu.');
-      return false;
+async function safeUpdate(updateFn, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      // 1. Read fresh data
+      const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+      if (!r.ok) {
+        showToast('Nepodařilo se ověřit aktuální data. Zkuste to znovu.');
+        return false;
+      }
+      const json = await r.json();
+      if (!json.record) {
+        showToast('Bin je prázdný — nelze uložit.');
+        return false;
+      }
+      const fresh = json.record;
+      if (!fresh.adminPin) fresh.adminPin = 'lednice2026';
+
+      // 2. Apply changes
+      const updated = updateFn(fresh);
+      if (!updated) return false;
+
+      // 3. Write
+      const saved = await saveData(updated);
+      if (!saved) return false;
+
+      // 4. Verify — re-read and check
+      const vr = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+      if (vr.ok) {
+        const vJson = await vr.json();
+        if (vJson.record) {
+          const serverVoters = (vJson.record.voters || []).length;
+          const ourVoters = (updated.voters || []).length;
+          const serverDrinks = (vJson.record.drinks || []).length;
+          const ourDrinks = (updated.drinks || []).length;
+          if (serverVoters >= ourVoters && serverDrinks >= ourDrinks) {
+            // Data matches or someone else added more — success
+            setState({ data: vJson.record });
+            return true;
+          }
+          // Mismatch — someone else overwrote, retry
+          console.warn(`Race condition detected (attempt ${attempt}/${retries}), retrying...`);
+          if (attempt < retries) continue;
+        }
+      }
+      // Verification read failed but save succeeded — accept it
+      return true;
+    } catch (e) {
+      console.error('Safe update error:', e);
+      if (attempt === retries) {
+        showToast('Chyba sítě při ukládání!');
+        return false;
+      }
     }
-    const json = await r.json();
-    if (!json.record) {
-      showToast('Bin je prázdný — nelze uložit.');
-      return false;
-    }
-    const fresh = json.record;
-    const updated = updateFn(fresh);
-    if (!updated) return false;
-    return await saveData(updated);
-  } catch (e) {
-    console.error('Safe update error:', e);
-    showToast('Chyba sítě při ukládání!');
-    return false;
   }
+  showToast('Nepodařilo se uložit po opakovaných pokusech.');
+  return false;
 }
 
 // ── Toast ──
@@ -346,7 +382,8 @@ async function submitVote() {
 }
 
 function tryUnlockAdmin() {
-  if (state.pinInput === CONFIG.ADMIN_PIN) setState({ adminUnlocked: true, pinError: false, pinInput: '' });
+  const pin = state.data?.adminPin || 'lednice2026';
+  if (state.pinInput === pin) setState({ adminUnlocked: true, pinError: false, pinInput: '' });
   else setState({ pinError: true });
 }
 
@@ -410,9 +447,18 @@ async function adminMerge() {
   setState({ mergeA: '', mergeB: '' });
 }
 
+async function adminChangePin() {
+  const pin = (state.newAdminPin || '').trim();
+  if (!pin || pin.length < 4) { showToast('Heslo musí mít alespoň 4 znaky.'); return; }
+  await safeUpdate(f => ({ ...f, adminPin: pin }));
+  setState({ newAdminPin: '' });
+  showToast('✅ Heslo správce změněno.');
+}
+
 async function resetAll() {
   if (!confirm('Opravdu smazat VŠECHNA data ankety (nápoje, hlasy, uživatele)?')) return;
-  await saveData(INIT_DATA);
+  const currentPin = state.data?.adminPin || 'lednice2026';
+  await saveData({ ...INIT_DATA, adminPin: currentPin });
   showToast('Anketa resetována.');
 }
 
@@ -499,7 +545,7 @@ function renderSetup() {
       h('ol', null,
         h('li', null, 'Jděte na ', h('a', { href: 'https://jsonbin.io', target: '_blank' }, 'jsonbin.io'), ' a vytvořte si bezplatný účet.'),
         h('li', null, 'V dashboardu klikněte na ', h('strong', null, 'API Keys'), ' a zkopírujte svůj ', h('code', null, 'X-Master-Key'), '.'),
-        h('li', null, 'Vytvořte nový bin s obsahem: ', h('code', null, '{"drinks":[],"votes":{},"voters":[],"users":[]}'), ''),
+        h('li', null, 'Vytvořte nový bin s obsahem: ', h('code', null, '{"drinks":[],"votes":{},"voters":[],"users":[],"adminPin":"lednice2026"}'), ''),
         h('li', null, 'Zkopírujte ', h('strong', null, 'Bin ID'), ' (z URL nebo z detailu binu).'),
         h('li', null, 'Otevřete tento HTML soubor a nahoře ve scriptu vyplňte ', h('code', null, 'JSONBIN_BIN_ID'), ' a ', h('code', null, 'JSONBIN_API_KEY'), '.'),
         h('li', null, 'Uložte, pushněte na GitHub a zapněte GitHub Pages.'),
@@ -768,6 +814,17 @@ function renderAdmin() {
     voterBlock.appendChild(vl);
   }
   content.appendChild(voterBlock);
+
+  // ── Change admin PIN ──
+  const pinBlock = h('div', { className: 'admin-block' },
+    h('p', { className: 'admin-title' }, '🔑 Heslo správce'),
+  );
+  const newPinIn = h('input', { className: 'input', type: 'password', placeholder: 'Nové heslo…',
+    value: state.newAdminPin || '',
+    onInput: e => { state.newAdminPin = e.target.value; } });
+  pinBlock.appendChild(h('div', { className: 'row' }, newPinIn,
+    h('button', { className: 'btn btn-p', onClick: adminChangePin }, 'Změnit')));
+  content.appendChild(pinBlock);
 
   // ── Danger zone ──
   content.appendChild(h('div', { className: 'danger' },
