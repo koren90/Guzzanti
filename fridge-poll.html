@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firemní lednice – Anketa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sky-50: #f0f9ff; --sky-100: #e0f2fe; --sky-200: #bae6fd;
+  --sky-500: #0ea5e9; --sky-600: #0284c7; --sky-900: #0c4a6e;
+  --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-300: #cbd5e1;
+  --slate-400: #94a3b8; --slate-500: #64748b; --slate-800: #1e293b;
+  --red-50: #fef2f2; --red-200: #fca5a5; --red-500: #ef4444;
+  --green-50: #ecfdf5; --green-200: #a7f3d0; --green-600: #059669;
+}
+body {
+  font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(180deg, var(--sky-100) 0%, var(--sky-50) 40%, #fff 100%);
+  color: var(--slate-800);
+  min-height: 100vh;
+}
+#app { max-width: 540px; margin: 0 auto; padding: 0 16px 40px; }
+
+/* Header */
+.header { text-align: center; padding: 28px 0 6px; }
+.header-icon { font-size: 44px; }
+.header h1 { font-size: 24px; font-weight: 800; color: var(--sky-900); letter-spacing: -0.5px; margin: 4px 0; }
+.header p { font-size: 13px; color: var(--slate-500); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin: 18px 0 14px; background: var(--slate-200); border-radius: 12px; padding: 4px; }
+.tabs button { flex: 1; padding: 10px 6px; border: none; border-radius: 10px; background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--slate-500); font-family: inherit; transition: all .2s; }
+.tabs button.active { background: #fff; color: var(--sky-900); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+/* Toast */
+.toast { background: var(--sky-900); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 12px; animation: fadeIn .2s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Card */
+.card { background: #fff; border-radius: 16px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.card-label { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.hint { font-size: 12px; color: var(--slate-400); margin-bottom: 10px; }
+
+/* Inputs */
+.input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 2px solid var(--slate-200); font-size: 14px; font-family: inherit; outline: none; transition: border .2s; box-sizing: border-box; }
+.input:focus { border-color: var(--sky-500); }
+.input-err { border-color: var(--red-500) !important; }
+.row { display: flex; gap: 8px; }
+.select { flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--slate-200); font-size: 13px; font-family: inherit; background: #fff; outline: none; }
+.spacer { height: 8px; }
+
+/* Buttons */
+.btn { padding: 10px 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity .15s; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn-p { background: linear-gradient(135deg, var(--sky-600), var(--sky-500)); color: #fff; }
+.btn-sec { background: #fff; border: 2px solid var(--slate-200); color: var(--slate-500); font-weight: 600; font-size: 13px; padding: 8px 16px; }
+.btn-tiny { padding: 4px 10px; border-radius: 8px; border: 1px solid var(--slate-300); background: #fff; color: var(--slate-500); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-rm { background: var(--red-50); border: none; border-radius: 8px; width: 28px; height: 28px; cursor: pointer; color: var(--red-500); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.btn-danger { background: var(--red-500); color: #fff; padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
+.w-full { width: 100%; }
+.mt-sm { margin-top: 14px; }
+.mt-md { margin-top: 16px; }
+
+/* Error text */
+.err { color: var(--red-500); font-size: 13px; margin-top: 8px; }
+
+/* Badge */
+.badge { background: var(--sky-50); border: 2px solid var(--sky-200); border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+
+/* Pick bar */
+.pick-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 8px 14px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.pick-label { font-size: 12px; color: var(--slate-500); font-weight: 600; }
+.pick-dots { display: flex; gap: 6px; }
+.pick-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--slate-200); transition: all .2s; }
+.pick-dot.filled { background: var(--sky-500); box-shadow: 0 0 6px rgba(14,165,233,.4); }
+.pick-num { font-size: 13px; font-weight: 800; color: var(--sky-900); margin-left: auto; }
+
+/* Add own drink */
+.add-own { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 14px; border: 2px dashed var(--sky-200); }
+.add-own-label { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--sky-900); }
+.add-own-note { font-weight: 400; color: var(--slate-400); font-size: 11px; }
+
+/* Drink grid */
+.pick-hint { font-size: 13px; color: var(--slate-500); margin-bottom: 10px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.d-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border-radius: 12px; border: 2px solid var(--slate-200); background: #fff; cursor: pointer; transition: all .15s; position: relative; font-family: inherit; font-size: 13px; }
+.d-card:hover { border-color: var(--slate-300); }
+.d-card.selected { border-color: var(--sky-600); background: var(--sky-50); box-shadow: 0 0 0 3px rgba(2,132,199,.15); }
+.d-emoji { font-size: 26px; }
+.d-name { font-weight: 600; font-size: 12px; text-align: center; line-height: 1.2; }
+.d-votes { font-size: 11px; color: var(--slate-400); }
+.d-check { position: absolute; top: 5px; right: 7px; background: var(--sky-600); color: #fff; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+/* Pick summary */
+.pick-summary { margin-top: 14px; padding: 12px 14px; background: var(--sky-50); border-radius: 10px; border: 1px solid var(--sky-200); }
+.pick-sum-label { font-size: 12px; font-weight: 700; color: var(--sky-900); margin-bottom: 8px; }
+.pick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #fff; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid var(--slate-300); }
+.pick-tag.new { border-color: var(--green-200); background: var(--green-50); }
+.new-badge { font-size: 9px; font-weight: 700; color: var(--green-600); background: var(--green-200); padding: 1px 5px; border-radius: 4px; text-transform: uppercase; }
+.pick-tag-x { background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 12px; font-weight: 700; padding: 0; margin-left: 2px; }
+
+/* Results */
+.empty { text-align: center; padding: 40px 0; }
+.empty-icon { font-size: 40px; }
+.empty-text { color: var(--slate-400); font-size: 14px; margin-top: 8px; }
+.stats { display: flex; gap: 8px; margin-bottom: 16px; }
+.stat-box { flex: 1; background: #fff; border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.stat-n { display: block; font-size: 22px; font-weight: 800; color: var(--sky-900); }
+.stat-l { font-size: 11px; color: var(--slate-400); font-weight: 600; }
+.res-list { display: flex; flex-direction: column; gap: 8px; }
+.res-row { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 12px; padding: 11px 12px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.res-rank { font-size: 18px; width: 30px; text-align: center; flex-shrink: 0; }
+.res-info { flex: 1; min-width: 0; }
+.res-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.res-name { font-weight: 700; font-size: 13px; }
+.res-votes { font-size: 12px; color: var(--slate-500); font-weight: 600; }
+.bar-bg { height: 7px; border-radius: 4px; background: var(--slate-100); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width .4s ease; min-width: 2px; }
+details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; font-weight: 600; margin-top: 16px; }
+.det-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.det-item { font-size: 13px; padding: 6px 10px; background: #f8fafc; border-radius: 8px; }
+
+/* Admin */
+.admin-block { margin-bottom: 24px; }
+.admin-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.a-list { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.a-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.04); gap: 8px; }
+.a-item-name { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-item-sub { font-size: 11px; color: var(--slate-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-vote-count { font-weight: 400; color: var(--slate-400); font-size: 12px; }
+.voted-badge { font-size: 10px; font-weight: 600; color: var(--sky-600); background: var(--sky-100); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.merge-preview { font-size: 12px; color: var(--slate-500); margin-top: 8px; line-height: 1.5; }
+.danger { margin-top: 20px; padding: 16px; border-radius: 12px; border: 2px dashed var(--red-200); background: var(--red-50); }
+.danger-label { font-size: 11px; font-weight: 700; color: var(--red-500); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Loading */
+.loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; }
+.loading-icon { font-size: 48px; margin-bottom: 12px; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+.loading-text { color: var(--slate-500); font-size: 14px; }
+
+/* Footer */
+.footer { text-align: center; font-size: 12px; color: var(--slate-400); margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--slate-200); }
+
+/* Setup screen */
+.setup-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,.08); margin-top: 20px; }
+.setup-card h2 { font-size: 18px; font-weight: 800; color: var(--sky-900); margin-bottom: 4px; }
+.setup-card p { font-size: 13px; color: var(--slate-500); margin-bottom: 16px; }
+.setup-card ol { font-size: 13px; color: var(--slate-800); line-height: 1.8; padding-left: 20px; margin-bottom: 16px; }
+.setup-card code { background: var(--slate-100); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ╔══════════════════════════════════════════════════════════╗
+// ║  KONFIGURACE — vyplňte údaje z jsonbin.io               ║
+// ╚══════════════════════════════════════════════════════════╝
+const CONFIG = {
+  JSONBIN_BIN_ID:   '',  // ID binu z jsonbin.io
+  JSONBIN_API_KEY:  '',  // X-Master-Key z jsonbin.io
+  ADMIN_PIN:        'lednice2026',
+  MAX_PICKS:        3,
+};
+// ════════════════════════════════════════════════════════════
+
+const EMOJIS = ['🥤','🧃','🍺','☕','🫧','🍹','🧊','💧','🍋','🫖','🥛','🍵','🫗','🍷','🥂','🧋'];
+const emoji = i => EMOJIS[i % EMOJIS.length];
+const norm = s => s.trim().toLowerCase().replace(/\s+/g, ' ');
+const INIT_DATA = { drinks: [], votes: {}, voters: [], users: [] };
+
+// ── State ──
+let state = {
+  data: null, loading: true, tab: 'vote', toast: '',
+  loginName: '', loginPass: '', loginError: '', currentUser: null,
+  picks: [], newDrinkInput: '',
+  adminUnlocked: false, pinInput: '', pinError: false,
+  adminNewDrink: '', newUserName: '', newUserPass: '',
+  mergeA: '', mergeB: '',
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+// ── JSONBin API ──
+const API_BASE = 'https://api.jsonbin.io/v3/b';
+const headers = () => ({
+  'Content-Type': 'application/json',
+  'X-Master-Key': CONFIG.JSONBIN_API_KEY,
+});
+
+async function loadData() {
+  try {
+    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+    const json = await r.json();
+    setState({ data: json.record || INIT_DATA, loading: false });
+  } catch (e) {
+    console.error('Load error:', e);
+    setState({ data: INIT_DATA, loading: false });
+  }
+}
+
+async function saveData(newData) {
+  try {
+    await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}`, {
+      method: 'PUT', headers: headers(), body: JSON.stringify(newData),
+    });
+    setState({ data: newData });
+    return true;
+  } catch (e) {
+    console.error('Save error:', e);
+    showToast('Chyba při ukládání!');
+    return false;
+  }
+}
+
+// Re-read before write to avoid overwriting concurrent changes
+async function safeUpdate(updateFn) {
+  try {
+    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+    const json = await r.json();
+    const fresh = json.record || INIT_DATA;
+    const updated = updateFn(fresh);
+    if (!updated) return false;
+    return await saveData(updated);
+  } catch (e) {
+    console.error('Safe update error:', e);
+    showToast('Chyba při ukládání!');
+    return false;
+  }
+}
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  setState({ toast: msg });
+  toastTimer = setTimeout(() => setState({ toast: '' }), 2800);
+}
+
+// ── Helpers ──
+function voteLabel(v) { return v === 1 ? 'hlas' : (v >= 2 && v <= 4 ? 'hlasy' : 'hlasů'); }
+
+function rankIcon(i, v) {
+  if (v === 0) return `${i + 1}.`;
+  return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+}
+
+// ── Actions ──
+function doLogin() {
+  const { loginName, loginPass, data } = state;
+  if (!loginName.trim() || !loginPass.trim()) { setState({ loginError: 'Vyplňte jméno i heslo.' }); return; }
+  const id = norm(loginName);
+  const user = data.users.find(u => u.id === id);
+  if (!user) { setState({ loginError: 'Uživatel nenalezen. Požádejte správce o přidání.' }); return; }
+  if (user.password !== loginPass) { setState({ loginError: 'Špatné heslo.' }); return; }
+  if (data.voters.some(v => v.id === id)) { setState({ loginError: 'Pod tímto účtem už bylo hlasováno!' }); return; }
+  setState({ currentUser: user, loginError: '', loginName: '', loginPass: '', picks: [], newDrinkInput: '' });
+}
+
+function doLogout() { setState({ currentUser: null, picks: [], newDrinkInput: '' }); }
+
+function togglePick(drink) {
+  const { picks } = state;
+  if (picks.includes(drink)) setState({ picks: picks.filter(p => p !== drink) });
+  else if (picks.length < CONFIG.MAX_PICKS) setState({ picks: [...picks, drink] });
+  else showToast(`Max. ${CONFIG.MAX_PICKS} hlasů/přidání!`);
+}
+
+function removePick(drink) { setState({ picks: state.picks.filter(p => p !== drink) }); }
+
+function addOwnDrink() {
+  const name = state.newDrinkInput.trim();
+  if (!name) return;
+  if (state.picks.length >= CONFIG.MAX_PICKS) { showToast(`Max. ${CONFIG.MAX_PICKS} hlasů/přidání!`); return; }
+  const existing = state.data.drinks.find(d => norm(d) === norm(name));
+  if (existing) {
+    if (state.picks.includes(existing)) { showToast(`„${existing}" už máš vybraný.`); }
+    else { setState({ picks: [...state.picks, existing] }); showToast(`„${existing}" už existuje — přidán hlas.`); }
+    setState({ newDrinkInput: '' }); return;
+  }
+  const inPicks = state.picks.find(p => norm(p) === norm(name));
+  if (inPicks) { showToast(`„${inPicks}" už máš vybraný.`); setState({ newDrinkInput: '' }); return; }
+  setState({ picks: [...state.picks, name], newDrinkInput: '' });
+}
+
+async function submitVote() {
+  if (state.picks.length === 0) { showToast('Vyber nebo přidej alespoň 1 nápoj!'); return; }
+  if (!state.currentUser) return;
+  const userId = state.currentUser.id;
+  const userName = state.currentUser.name;
+  const picks = [...state.picks];
+
+  const ok = await safeUpdate(fresh => {
+    if (fresh.voters.some(v => v.id === userId)) { showToast('Už jste hlasoval/a!'); return null; }
+    const newDrinks = [...fresh.drinks];
+    const newVotes = { ...fresh.votes };
+    picks.forEach(p => {
+      if (!newDrinks.find(d => norm(d) === norm(p))) { newDrinks.push(p); newVotes[p] = 0; }
+    });
+    const normalizedPicks = picks.map(p => newDrinks.find(d => norm(d) === norm(p)) || p);
+    normalizedPicks.forEach(p => { newVotes[p] = (newVotes[p] || 0) + 1; });
+    return { ...fresh, drinks: newDrinks, votes: newVotes, voters: [...fresh.voters, { id: userId, name: userName, picks: normalizedPicks }] };
+  });
+
+  if (ok) {
+    setState({ picks: [], currentUser: null, tab: 'results' });
+    showToast('🎉 Díky za hlas!');
+  }
+}
+
+function tryUnlockAdmin() {
+  if (state.pinInput === CONFIG.ADMIN_PIN) setState({ adminUnlocked: true, pinError: false, pinInput: '' });
+  else setState({ pinError: true });
+}
+
+async function adminAddDrink() {
+  const name = state.adminNewDrink.trim();
+  if (!name) return;
+  if (state.data.drinks.some(d => norm(d) === norm(name))) { showToast('Tento nápoj už existuje.'); return; }
+  await safeUpdate(f => ({ ...f, drinks: [...f.drinks, name], votes: { ...f.votes, [name]: 0 } }));
+  setState({ adminNewDrink: '' });
+  showToast(`✅ ${name} přidán!`);
+}
+
+async function adminRemoveDrink(drink) {
+  await safeUpdate(f => ({
+    ...f, drinks: f.drinks.filter(d => d !== drink),
+    votes: Object.fromEntries(Object.entries(f.votes).filter(([k]) => k !== drink)),
+    voters: f.voters.map(v => ({ ...v, picks: (v.picks || []).filter(p => p !== drink) })),
+  }));
+  showToast(`🗑 ${drink} odstraněn.`);
+}
+
+async function adminRemoveVoter(voterId) {
+  const voter = state.data.voters.find(v => v.id === voterId);
+  if (!voter) return;
+  await safeUpdate(f => {
+    const nv = { ...f.votes };
+    (voter.picks || []).forEach(p => { if (nv[p] !== undefined) nv[p] = Math.max(0, (nv[p] || 0) - 1); });
+    return { ...f, votes: nv, voters: f.voters.filter(v => v.id !== voterId) };
+  });
+  showToast(`🗑 Hlas od „${voter.name}" smazán.`);
+}
+
+async function adminAddUser() {
+  const name = state.newUserName.trim(), pass = state.newUserPass.trim();
+  if (!name || !pass) { showToast('Vyplňte jméno i heslo.'); return; }
+  const id = norm(name);
+  if (state.data.users.some(u => u.id === id)) { showToast('Tento uživatel už existuje.'); return; }
+  await safeUpdate(f => ({ ...f, users: [...f.users, { id, name, password: pass }] }));
+  setState({ newUserName: '', newUserPass: '' });
+  showToast(`✅ Uživatel ${name} přidán.`);
+}
+
+async function adminRemoveUser(userId) {
+  await safeUpdate(f => ({ ...f, users: f.users.filter(u => u.id !== userId) }));
+  showToast('Uživatel odebrán.');
+}
+
+async function adminMerge() {
+  const { mergeA, mergeB } = state;
+  if (!mergeA || !mergeB || mergeA === mergeB) { showToast('Vyberte dva různé nápoje.'); return; }
+  await safeUpdate(f => {
+    const nv = { ...f.votes };
+    nv[mergeA] = (nv[mergeA] || 0) + (nv[mergeB] || 0);
+    delete nv[mergeB];
+    const voters = f.voters.map(v => ({
+      ...v, picks: (v.picks || []).map(p => p === mergeB ? mergeA : p).filter((p, i, a) => a.indexOf(p) === i),
+    }));
+    return { ...f, drinks: f.drinks.filter(d => d !== mergeB), votes: nv, voters };
+  });
+  showToast(`✅ „${mergeB}" sloučen do „${mergeA}".`);
+  setState({ mergeA: '', mergeB: '' });
+}
+
+async function resetAll() {
+  if (!confirm('Opravdu smazat VŠECHNA data ankety (nápoje, hlasy, uživatele)?')) return;
+  await saveData(INIT_DATA);
+  showToast('Anketa resetována.');
+}
+
+// ── Render ──
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k, v]) => {
+    if (k === 'className') el.className = v;
+    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else el.setAttribute(k, v);
+  });
+  children.flat(Infinity).forEach(c => {
+    if (c == null || c === false) return;
+    el.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(c) : c);
+  });
+  return el;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  // Check config
+  if (!CONFIG.JSONBIN_BIN_ID || !CONFIG.JSONBIN_API_KEY) {
+    app.appendChild(renderSetup());
+    return;
+  }
+
+  if (state.loading) {
+    app.appendChild(h('div', { className: 'loading' },
+      h('div', { className: 'loading-icon' }, '🧊'),
+      h('p', { className: 'loading-text' }, 'Načítám anketu…'),
+    ));
+    return;
+  }
+
+  // Header
+  app.appendChild(h('div', { className: 'header' },
+    h('div', { className: 'header-icon' }, '🧊'),
+    h('h1', null, 'Firemní lednice'),
+    h('p', null, 'Co tam chcete mít? Hlasujte!'),
+  ));
+
+  // Tabs
+  const tabs = h('div', { className: 'tabs' });
+  [['vote', '🗳 Hlasovat'], ['results', '📊 Výsledky'], ['admin', '⚙️ Správa']].forEach(([id, label]) => {
+    const btn = h('button', { className: state.tab === id ? 'active' : '', onClick: () => setState({ tab: id }) }, label);
+    tabs.appendChild(btn);
+  });
+  app.appendChild(tabs);
+
+  // Toast
+  if (state.toast) app.appendChild(h('div', { className: 'toast' }, state.toast));
+
+  // Tab content
+  if (state.tab === 'vote') app.appendChild(renderVote());
+  else if (state.tab === 'results') app.appendChild(renderResults());
+  else if (state.tab === 'admin') app.appendChild(renderAdmin());
+
+  app.appendChild(h('div', { className: 'footer' }, 'Sdílejte odkaz s kolegy — každý může hlasovat jednou.'));
+}
+
+function renderSetup() {
+  return h('div', null,
+    h('div', { className: 'header' },
+      h('div', { className: 'header-icon' }, '🧊'),
+      h('h1', null, 'Firemní lednice'),
+    ),
+    h('div', { className: 'setup-card' },
+      h('h2', null, '⚙️ Počáteční nastavení'),
+      h('p', null, 'Anketa potřebuje databázi. Nastavení zabere 2 minuty:'),
+      h('ol', null,
+        h('li', null, 'Jděte na ', h('a', { href: 'https://jsonbin.io', target: '_blank' }, 'jsonbin.io'), ' a vytvořte si bezplatný účet.'),
+        h('li', null, 'V dashboardu klikněte na ', h('strong', null, 'API Keys'), ' a zkopírujte svůj ', h('code', null, 'X-Master-Key'), '.'),
+        h('li', null, 'Vytvořte nový bin s obsahem: ', h('code', null, '{"drinks":[],"votes":{},"voters":[],"users":[]}'), ''),
+        h('li', null, 'Zkopírujte ', h('strong', null, 'Bin ID'), ' (z URL nebo z detailu binu).'),
+        h('li', null, 'Otevřete tento HTML soubor a nahoře ve scriptu vyplňte ', h('code', null, 'JSONBIN_BIN_ID'), ' a ', h('code', null, 'JSONBIN_API_KEY'), '.'),
+        h('li', null, 'Uložte, pushněte na GitHub a zapněte GitHub Pages.'),
+      ),
+      h('p', null, 'Po vyplnění konfigurace se anketa automaticky spustí.'),
+    ),
+  );
+}
+
+function renderVote() {
+  const { data, currentUser, picks, newDrinkInput } = state;
+  const hasVoted = currentUser && data.voters.some(v => v.id === currentUser.id);
+
+  if (!currentUser) {
+    // Login form
+    const nameInput = h('input', { className: 'input', placeholder: 'Jméno', value: state.loginName,
+      onInput: e => { state.loginName = e.target.value; state.loginError = ''; },
+      onKeydown: e => { if (e.key === 'Enter') document.getElementById('lp')?.focus(); } });
+    const passInput = h('input', { className: 'input', id: 'lp', type: 'password', placeholder: 'Heslo', value: state.loginPass,
+      onInput: e => { state.loginPass = e.target.value; state.loginError = ''; },
+      onKeydown: e => { if (e.key === 'Enter') doLogin(); } });
+    const card = h('div', { className: 'card' },
+      h('p', { className: 'card-label' }, '🔑 Přihlášení'),
+      h('p', { className: 'hint' }, 'Přihlaste se účtem, který vám vytvořil správce ankety.'),
+      nameInput, h('div', { className: 'spacer' }), passInput,
+    );
+    if (state.loginError) card.appendChild(h('p', { className: 'err' }, state.loginError));
+    card.appendChild(h('button', { className: 'btn btn-p w-full mt-sm', onClick: doLogin }, 'Přihlásit se →'));
+    return h('div', null, card);
+  }
+
+  if (hasVoted) {
+    return h('div', null, h('div', { className: 'card' },
+      h('p', { className: 'card-label' }, '✅ Už jste hlasoval/a'),
+      h('p', { className: 'hint' }, 'Podívejte se na výsledky v záložce 📊.'),
+      h('button', { className: 'btn btn-sec', onClick: doLogout }, 'Odhlásit se'),
+    ));
+  }
+
+  const content = h('div', null);
+
+  // Badge
+  content.appendChild(h('div', { className: 'badge' },
+    h('span', null, 'Přihlášen: ', h('strong', null, currentUser.name)),
+    h('button', { className: 'btn-tiny', onClick: doLogout }, 'Odhlásit'),
+  ));
+
+  // Pick bar
+  const dots = h('div', { className: 'pick-dots' });
+  for (let i = 0; i < CONFIG.MAX_PICKS; i++) dots.appendChild(h('span', { className: `pick-dot ${i < picks.length ? 'filled' : ''}` }));
+  content.appendChild(h('div', { className: 'pick-bar' },
+    h('span', { className: 'pick-label' }, 'Hlasy / přidání:'), dots,
+    h('span', { className: 'pick-num' }, `${picks.length}/${CONFIG.MAX_PICKS}`),
+  ));
+
+  // Add own drink
+  const addInput = h('input', { className: 'input', placeholder: 'Název nového nápoje…', value: newDrinkInput,
+    onInput: e => { state.newDrinkInput = e.target.value; },
+    onKeydown: e => { if (e.key === 'Enter') addOwnDrink(); } });
+  content.appendChild(h('div', { className: 'add-own' },
+    h('p', { className: 'add-own-label' }, '➕ Přidat vlastní nápoj ', h('span', { className: 'add-own-note' }, '(počítá se jako 1 hlas)')),
+    h('div', { className: 'row' }, addInput,
+      h('button', { className: 'btn btn-p', onClick: addOwnDrink, disabled: !newDrinkInput.trim() || picks.length >= CONFIG.MAX_PICKS }, '+ Přidat')),
+  ));
+
+  // Existing drinks grid
+  if (data.drinks.length > 0) {
+    content.appendChild(h('p', { className: 'pick-hint' }, 'Nebo hlasuj pro existující nápoje:'));
+    const grid = h('div', { className: 'grid' });
+    data.drinks.forEach((drink, i) => {
+      const sel = picks.includes(drink);
+      const card = h('button', { className: `d-card ${sel ? 'selected' : ''}`, onClick: () => togglePick(drink) },
+        h('span', { className: 'd-emoji' }, emoji(i)),
+        h('span', { className: 'd-name' }, drink),
+        h('span', { className: 'd-votes' }, `${data.votes[drink] || 0} hl.`),
+      );
+      if (sel) card.appendChild(h('span', { className: 'd-check' }, '✓'));
+      grid.appendChild(card);
+    });
+    content.appendChild(grid);
+  }
+
+  // Picks summary
+  if (picks.length > 0) {
+    const tags = h('div', { className: 'pick-tags' });
+    picks.forEach(p => {
+      const isNew = !data.drinks.includes(p);
+      const tag = h('span', { className: `pick-tag ${isNew ? 'new' : ''}` }, p, ' ');
+      if (isNew) tag.appendChild(h('span', { className: 'new-badge' }, 'nový'));
+      tag.appendChild(h('button', { className: 'pick-tag-x', onClick: () => removePick(p) }, '✕'));
+      tags.appendChild(tag);
+    });
+    content.appendChild(h('div', { className: 'pick-summary' },
+      h('p', { className: 'pick-sum-label' }, 'Tvůj výběr:'), tags,
+    ));
+  }
+
+  content.appendChild(h('button', {
+    className: 'btn btn-p w-full mt-md',
+    style: { opacity: picks.length === 0 ? '.5' : '1' },
+    onClick: submitVote, disabled: picks.length === 0,
+  }, 'Odeslat hlas 🗳'));
+
+  return content;
+}
+
+function renderResults() {
+  const { data } = state;
+  if (data.drinks.length === 0) {
+    return h('div', { className: 'empty' },
+      h('p', { className: 'empty-icon' }, '📊'),
+      h('p', { className: 'empty-text' }, 'Zatím nejsou žádné nápoje ani hlasy.'),
+    );
+  }
+
+  const sorted = [...data.drinks].sort((a, b) => (data.votes[b] || 0) - (data.votes[a] || 0));
+  const maxV = Math.max(...Object.values(data.votes || {}), 1);
+  const totalVotes = Object.values(data.votes).reduce((a, b) => a + b, 0);
+
+  const content = h('div', null);
+
+  // Stats
+  content.appendChild(h('div', { className: 'stats' },
+    h('div', { className: 'stat-box' }, h('span', { className: 'stat-n' }, `${data.voters.length}`), h('span', { className: 'stat-l' }, 'hlasujících')),
+    h('div', { className: 'stat-box' }, h('span', { className: 'stat-n' }, `${data.drinks.length}`), h('span', { className: 'stat-l' }, 'nápojů')),
+    h('div', { className: 'stat-box' }, h('span', { className: 'stat-n' }, `${totalVotes}`), h('span', { className: 'stat-l' }, 'hlasů')),
+  ));
+
+  // Results list
+  const list = h('div', { className: 'res-list' });
+  sorted.forEach((drink, i) => {
+    const v = data.votes[drink] || 0;
+    const pct = maxV > 0 ? (v / maxV) * 100 : 0;
+    const bg = i === 0 ? 'linear-gradient(90deg,#0ea5e9,#06b6d4)' :
+      i === 1 ? 'linear-gradient(90deg,#38bdf8,#67e8f9)' : 'linear-gradient(90deg,#94a3b8,#cbd5e1)';
+    list.appendChild(h('div', { className: 'res-row' },
+      h('div', { className: 'res-rank' }, rankIcon(i, v)),
+      h('div', { className: 'res-info' },
+        h('div', { className: 'res-head' },
+          h('span', { className: 'res-name' }, `${emoji(data.drinks.indexOf(drink))} ${drink}`),
+          h('span', { className: 'res-votes' }, `${v} ${voteLabel(v)}`),
+        ),
+        h('div', { className: 'bar-bg' }, h('div', { className: 'bar-fill', style: { width: `${pct}%`, background: bg } })),
+      ),
+    ));
+  });
+  content.appendChild(list);
+
+  // Voters detail
+  if (data.voters.length > 0) {
+    const det = h('details', null, h('summary', null, `Kdo hlasoval (${data.voters.length})`));
+    const dl = h('div', { className: 'det-list' });
+    data.voters.forEach(v => {
+      dl.appendChild(h('div', { className: 'det-item' }, h('strong', null, v.name), ': ', (v.picks || []).join(', ')));
+    });
+    det.appendChild(dl);
+    content.appendChild(det);
+  }
+
+  // Refresh button
+  content.appendChild(h('button', { className: 'btn btn-sec w-full mt-md', onClick: () => { setState({ loading: true }); loadData(); } }, '🔄 Obnovit výsledky'));
+
+  return content;
+}
+
+function renderAdmin() {
+  if (!state.adminUnlocked) {
+    const pinInput = h('input', {
+      className: `input ${state.pinError ? 'input-err' : ''}`, type: 'password', placeholder: 'Heslo správce…',
+      value: state.pinInput,
+      onInput: e => { state.pinInput = e.target.value; state.pinError = false; },
+      onKeydown: e => { if (e.key === 'Enter') tryUnlockAdmin(); },
+    });
+    const card = h('div', { className: 'card' },
+      h('p', { className: 'card-label' }, '🔒 Správa je chráněna heslem'),
+      h('div', { className: 'row' }, pinInput, h('button', { className: 'btn btn-p', onClick: tryUnlockAdmin }, 'Odemknout')),
+    );
+    if (state.pinError) card.appendChild(h('p', { className: 'err' }, 'Špatné heslo.'));
+    return card;
+  }
+
+  const { data } = state;
+  const content = h('div', null);
+
+  // ── Users ──
+  const usersBlock = h('div', { className: 'admin-block' },
+    h('p', { className: 'admin-title' }, '👥 Uživatelé'),
+    h('p', { className: 'hint' }, 'Přidejte kolegy — budou se přihlašovat jménem a heslem.'),
+  );
+  const nameIn = h('input', { className: 'input', placeholder: 'Jméno', value: state.newUserName,
+    onInput: e => { state.newUserName = e.target.value; }, style: { flex: '1' } });
+  const passIn = h('input', { className: 'input', placeholder: 'Heslo', value: state.newUserPass,
+    onInput: e => { state.newUserPass = e.target.value; },
+    onKeydown: e => { if (e.key === 'Enter') adminAddUser(); }, style: { flex: '1' } });
+  usersBlock.appendChild(h('div', { className: 'row' }, nameIn, passIn,
+    h('button', { className: 'btn btn-p', onClick: adminAddUser }, '+ Přidat')));
+  if (data.users.length > 0) {
+    const ul = h('div', { className: 'a-list' });
+    data.users.forEach(u => {
+      const voted = data.voters.some(v => v.id === u.id);
+      const info = h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '0' } },
+        h('span', { className: 'a-item-name' }, u.name));
+      if (voted) info.appendChild(h('span', { className: 'voted-badge' }, 'hlasoval/a'));
+      ul.appendChild(h('div', { className: 'a-item' }, info,
+        h('button', { className: 'btn-rm', onClick: () => adminRemoveUser(u.id) }, '✕')));
+    });
+    usersBlock.appendChild(ul);
+  }
+  content.appendChild(usersBlock);
+
+  // ── Drinks ──
+  const drinksBlock = h('div', { className: 'admin-block' },
+    h('p', { className: 'admin-title' }, '🥤 Nápoje'),
+  );
+  const drinkIn = h('input', { className: 'input', placeholder: 'Název nápoje…', value: state.adminNewDrink,
+    onInput: e => { state.adminNewDrink = e.target.value; },
+    onKeydown: e => { if (e.key === 'Enter') adminAddDrink(); } });
+  drinksBlock.appendChild(h('div', { className: 'row' }, drinkIn,
+    h('button', { className: 'btn btn-p', onClick: adminAddDrink }, '+ Přidat')));
+  if (data.drinks.length > 0) {
+    const dl = h('div', { className: 'a-list' });
+    data.drinks.forEach((d, i) => {
+      dl.appendChild(h('div', { className: 'a-item' },
+        h('span', null, `${emoji(i)} ${d} `, h('span', { className: 'a-vote-count' }, `(${data.votes[d] || 0})`)),
+        h('button', { className: 'btn-rm', onClick: () => adminRemoveDrink(d) }, '✕')));
+    });
+    drinksBlock.appendChild(dl);
+  }
+  content.appendChild(drinksBlock);
+
+  // ── Merge ──
+  if (data.drinks.length >= 2) {
+    const mergeBlock = h('div', { className: 'admin-block' },
+      h('p', { className: 'admin-title' }, '🔗 Sloučit duplikáty'),
+      h('p', { className: 'hint' }, 'Vyberte dva nápoje — druhý se sloučí do prvního.'),
+    );
+
+    const selA = h('select', { className: 'select', onInput: e => { state.mergeA = e.target.value; render(); } },
+      h('option', { value: '' }, 'Ponechat ↓'));
+    data.drinks.forEach(d => { const o = h('option', { value: d }, `${d} (${data.votes[d]||0})`); if (d === state.mergeA) o.selected = true; selA.appendChild(o); });
+
+    const selB = h('select', { className: 'select', onInput: e => { state.mergeB = e.target.value; render(); } },
+      h('option', { value: '' }, 'Sloučit ↓'));
+    data.drinks.filter(d => d !== state.mergeA).forEach(d => { const o = h('option', { value: d }, `${d} (${data.votes[d]||0})`); if (d === state.mergeB) o.selected = true; selB.appendChild(o); });
+
+    mergeBlock.appendChild(h('div', { className: 'row' }, selA,
+      h('span', { style: { fontWeight: '700', color: 'var(--slate-500)', alignSelf: 'center' } }, '←'), selB));
+
+    if (state.mergeA && state.mergeB && state.mergeA !== state.mergeB) {
+      const total = (data.votes[state.mergeA]||0) + (data.votes[state.mergeB]||0);
+      mergeBlock.appendChild(h('p', { className: 'merge-preview' },
+        `„${state.mergeB}" (${data.votes[state.mergeB]||0}) → sloučí do → „${state.mergeA}" (${data.votes[state.mergeA]||0}) = `, h('strong', null, `${total} hlasů`)));
+    }
+    mergeBlock.appendChild(h('button', { className: 'btn btn-p mt-sm', onClick: adminMerge,
+      disabled: !state.mergeA || !state.mergeB || state.mergeA === state.mergeB }, 'Sloučit'));
+    content.appendChild(mergeBlock);
+  }
+
+  // ── Voter management ──
+  const voterBlock = h('div', { className: 'admin-block' },
+    h('p', { className: 'admin-title' }, '🗳 Správa hlasů'),
+    h('p', { className: 'hint' }, 'Smazáním hlasu umožníte dané osobě hlasovat znovu.'),
+  );
+  if (data.voters.length === 0) {
+    voterBlock.appendChild(h('p', { className: 'hint' }, 'Zatím nikdo nehlasoval.'));
+  } else {
+    const vl = h('div', { className: 'a-list' });
+    data.voters.forEach(voter => {
+      const info = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '2px', flex: '1', minWidth: '0' } },
+        h('span', { className: 'a-item-name' }, voter.name),
+        h('span', { className: 'a-item-sub' }, (voter.picks || []).join(', ')));
+      vl.appendChild(h('div', { className: 'a-item' }, info,
+        h('button', { className: 'btn-rm', onClick: () => adminRemoveVoter(voter.id) }, '✕')));
+    });
+    voterBlock.appendChild(vl);
+  }
+  content.appendChild(voterBlock);
+
+  // ── Danger zone ──
+  content.appendChild(h('div', { className: 'danger' },
+    h('p', { className: 'danger-label' }, 'Nebezpečná zóna'),
+    h('button', { className: 'btn-danger', onClick: resetAll }, '🗑 Resetovat celou anketu'),
+  ));
+
+  return content;
+}
+
+// ── Init ──
+if (CONFIG.JSONBIN_BIN_ID && CONFIG.JSONBIN_API_KEY) loadData();
+else { state.loading = false; }
+render();
+</script>
+</body>
+</html>
