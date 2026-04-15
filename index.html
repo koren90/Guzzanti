@@ -53,7 +53,7 @@ body {
 .spacer { height: 8px; }
 
 /* Buttons */
-.btn { padding: 10px 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity .15s; }
+.btn { padding: 10px 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity .15s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn-p { background: linear-gradient(135deg, var(--sky-600), var(--sky-500)); color: #fff; }
 .btn-sec { background: #fff; border: 2px solid var(--slate-200); color: var(--slate-500); font-weight: 600; font-size: 13px; padding: 8px 16px; }
@@ -86,7 +86,7 @@ body {
 /* Drink grid */
 .pick-hint { font-size: 13px; color: var(--slate-500); margin-bottom: 10px; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.d-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border-radius: 12px; border: 2px solid var(--slate-200); background: #fff; cursor: pointer; transition: all .15s; position: relative; font-family: inherit; font-size: 13px; }
+.d-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border-radius: 12px; border: 2px solid var(--slate-200); background: #fff; cursor: pointer; transition: all .15s; position: relative; font-family: inherit; font-size: 13px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
 .d-card:hover { border-color: var(--slate-300); }
 .d-card.selected { border-color: var(--sky-600); background: var(--sky-50); box-shadow: 0 0 0 3px rgba(2,132,199,.15); }
 .d-emoji { font-size: 26px; }
@@ -562,7 +562,7 @@ function renderVote() {
   content.appendChild(h('div', { className: 'add-own' },
     h('p', { className: 'add-own-label' }, '➕ Přidat vlastní nápoj ', h('span', { className: 'add-own-note' }, '(počítá se jako 1 hlas)')),
     h('div', { className: 'row' }, addInput,
-      h('button', { className: 'btn btn-p', onClick: addOwnDrink, disabled: picks.length >= CONFIG.MAX_PICKS }, '+ Přidat')),
+      h('button', { className: 'btn btn-p', onClick: addOwnDrink }, '+ Přidat')),
   ));
 
   // Existing drinks grid
@@ -597,11 +597,12 @@ function renderVote() {
     ));
   }
 
-  const isSubmitting = state.submitting;
+  const isSubmitting = !!state.submitting;
+  const canSubmit = picks.length > 0 && !isSubmitting;
   content.appendChild(h('button', {
     className: 'btn btn-p w-full mt-md',
-    style: { opacity: (picks.length === 0 || isSubmitting) ? '.5' : '1' },
-    onClick: submitVote, disabled: picks.length === 0 || isSubmitting,
+    style: { opacity: canSubmit ? '1' : '.5', touchAction: 'manipulation' },
+    onClick: submitVote,
   }, isSubmitting ? '⏳ Ukládám hlasy…' : 'Odeslat hlas 🗳'));
 
   return content;
