@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guzzanti – Anketa</title>
+<title>Firemní lednice – Anketa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -138,6 +138,11 @@ details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; fon
 .voted-badge { font-size: 10px; font-weight: 600; color: var(--sky-600); background: var(--sky-100); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
 .merge-preview { font-size: 12px; color: var(--slate-500); margin-top: 8px; line-height: 1.5; }
 .danger { margin-top: 20px; padding: 16px; border-radius: 12px; border: 2px dashed var(--red-200); background: var(--red-50); }
+.active-warn { margin-bottom: 20px; padding: 14px 16px; border-radius: 12px; background: #fef3c7; border: 2px solid #fcd34d; }
+.active-warn-title { font-size: 14px; font-weight: 800; color: #92400e; margin-bottom: 6px; }
+.active-warn-text { font-size: 12px; color: #78350f; margin-bottom: 10px; line-height: 1.4; }
+.active-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.active-chip { display: inline-flex; align-items: center; padding: 4px 10px; background: #fff; border-radius: 8px; font-size: 12px; font-weight: 700; color: #78350f; border: 1px solid #fcd34d; }
 .danger-label { font-size: 11px; font-weight: 700; color: var(--red-500); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
 /* Loading */
@@ -319,6 +324,52 @@ function rankIcon(i, v) {
 }
 
 // ── Actions ──
+const HEARTBEAT_INTERVAL = 15000; // 15s
+const STALE_THRESHOLD = 30000;    // 30s — older than this = stale
+let heartbeatTimer = null;
+
+async function heartbeatPing() {
+  if (!state.currentUser) return;
+  const userId = state.currentUser.id;
+  const userName = state.currentUser.name;
+  try {
+    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+    if (!r.ok) return;
+    const json = await r.json();
+    if (!json.record) return;
+    const fresh = json.record;
+    const active = (fresh.activeVoters || []).filter(v => v.id !== userId);
+    active.push({ id: userId, name: userName, ts: Date.now() });
+    await saveData({ ...fresh, activeVoters: active });
+  } catch (e) {
+    console.warn('Heartbeat failed:', e);
+  }
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatPing();
+  heartbeatTimer = setInterval(heartbeatPing, HEARTBEAT_INTERVAL);
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+}
+
+async function clearActiveVoter(userId) {
+  try {
+    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
+    if (!r.ok) return;
+    const json = await r.json();
+    if (!json.record) return;
+    const fresh = json.record;
+    const active = (fresh.activeVoters || []).filter(v => v.id !== userId);
+    await saveData({ ...fresh, activeVoters: active });
+  } catch (e) {
+    console.warn('Clear active voter failed:', e);
+  }
+}
+
 function doLogin() {
   const { loginName, loginPass, data } = state;
   if (!loginName.trim() || !loginPass.trim()) { setState({ loginError: 'Vyplňte jméno i heslo.' }); return; }
@@ -328,9 +379,21 @@ function doLogin() {
   if (user.password !== loginPass) { setState({ loginError: 'Špatné heslo.' }); return; }
   if (data.voters.some(v => v.id === id)) { setState({ loginError: 'Pod tímto účtem už bylo hlasováno!' }); return; }
   setState({ currentUser: user, loginError: '', loginName: '', loginPass: '', picks: [], newDrinkInput: '' });
+  startHeartbeat();
 }
 
-function doLogout() { setState({ currentUser: null, picks: [], newDrinkInput: '' }); }
+function doLogout() {
+  stopHeartbeat();
+  if (state.currentUser) clearActiveVoter(state.currentUser.id);
+  setState({ currentUser: null, picks: [], newDrinkInput: '' });
+}
+
+// Cleanup on tab close
+window.addEventListener('beforeunload', () => {
+  stopHeartbeat();
+  // Note: we don't clear activeVoter on close because async fetch won't complete.
+  // Stale threshold (30s) will auto-remove them.
+});
 
 function togglePick(drink) {
   const { picks } = state;
@@ -373,10 +436,13 @@ async function submitVote() {
     });
     const normalizedPicks = picks.map(p => newDrinks.find(d => norm(d) === norm(p)) || p);
     normalizedPicks.forEach(p => { newVotes[p] = (newVotes[p] || 0) + 1; });
-    return { ...fresh, drinks: newDrinks, votes: newVotes, voters: [...fresh.voters, { id: userId, name: userName, picks: normalizedPicks }] };
+    const activeVoters = (fresh.activeVoters || []).filter(v => v.id !== userId);
+    return { ...fresh, drinks: newDrinks, votes: newVotes, activeVoters,
+      voters: [...fresh.voters, { id: userId, name: userName, picks: normalizedPicks }] };
   });
 
   if (ok) {
+    stopHeartbeat();
     setState({ picks: [], currentUser: null, tab: 'results', submitting: false });
     showToast('🎉 Díky za hlas!');
   } else {
@@ -558,7 +624,7 @@ function render() {
   // Header
   app.appendChild(h('div', { className: 'header' },
     h('div', { className: 'header-icon' }, '🧊'),
-    h('h1', null, 'Guzzanti'),
+    h('h1', null, 'Firemní lednice'),
     h('p', null, 'Co tam chcete mít? Hlasujte!'),
   ));
 
@@ -585,7 +651,7 @@ function renderSetup() {
   return h('div', null,
     h('div', { className: 'header' },
       h('div', { className: 'header-icon' }, '🧊'),
-      h('h1', null, 'Guzzanti'),
+      h('h1', null, 'Firemní lednice'),
     ),
     h('div', { className: 'setup-card' },
       h('h2', null, '⚙️ Počáteční nastavení'),
@@ -769,6 +835,20 @@ function renderAdmin() {
   const { data } = state;
   const content = h('div', null);
 
+  // ── Active voters warning ──
+  const now = Date.now();
+  const active = (data.activeVoters || []).filter(v => (now - (v.ts || 0)) < STALE_THRESHOLD);
+  if (active.length > 0) {
+    const warn = h('div', { className: 'active-warn' },
+      h('p', { className: 'active-warn-title' }, '⚠️ Někdo právě hlasuje'),
+      h('p', { className: 'active-warn-text' },
+        'Doporučujeme počkat s úpravami, dokud hlasování neskončí. Jinak se mohou hlasy ztratit.'),
+      h('div', { className: 'active-list' },
+        ...active.map(v => h('span', { className: 'active-chip' }, `🟢 ${v.name}`))),
+    );
+    content.appendChild(warn);
+  }
+
   // ── Users ──
   const usersBlock = h('div', { className: 'admin-block' },
     h('p', { className: 'admin-title' }, '👥 Uživatelé'),
@@ -904,6 +984,13 @@ function renderAdmin() {
 if (CONFIG.JSONBIN_BIN_ID && CONFIG.JSONBIN_API_KEY) loadData();
 else { state.loading = false; }
 render();
+
+// Auto-refresh data when admin has the admin panel open (to see live active voters)
+setInterval(() => {
+  if (state.tab === 'admin' && state.adminUnlocked && !state.loading) {
+    loadData();
+  }
+}, 10000); // refresh every 10s
 </script>
 </body>
 </html>
