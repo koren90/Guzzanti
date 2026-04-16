@@ -136,6 +136,8 @@ details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; fon
 .a-item-sub { font-size: 11px; color: var(--slate-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .a-vote-count { font-weight: 400; color: var(--slate-400); font-size: 12px; }
 .voted-badge { font-size: 10px; font-weight: 600; color: var(--sky-600); background: var(--sky-100); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.pass-chip { font-family: 'Courier New', monospace; font-size: 12px; font-weight: 700; color: var(--sky-900); background: var(--sky-50); border: 1px solid var(--sky-200); padding: 3px 8px; border-radius: 6px; cursor: pointer; font-family: monospace; letter-spacing: 0.5px; touch-action: manipulation; }
+.pass-chip:active { background: var(--sky-100); }
 .merge-preview { font-size: 12px; color: var(--slate-500); margin-top: 8px; line-height: 1.5; }
 .danger { margin-top: 20px; padding: 16px; border-radius: 12px; border: 2px dashed var(--red-200); background: var(--red-50); }
 .active-warn { margin-bottom: 20px; padding: 14px 16px; border-radius: 12px; background: #fef3c7; border: 2px solid #fcd34d; }
@@ -530,14 +532,38 @@ async function adminRemoveVoter(voterId) {
   showToast(`🗑 Hlas od „${voter.name}" smazán.`);
 }
 
+function generatePassword() {
+  const chars = 'abcdefghijkmnpqrstuvwxyz23456789'; // no 0/O/1/l/i for readability
+  let p = '';
+  const arr = new Uint32Array(6);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < 6; i++) p += chars[arr[i] % chars.length];
+  return p;
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('📋 Zkopírováno: ' + text);
+  } catch {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('📋 Zkopírováno: ' + text); }
+    catch { showToast('Nelze zkopírovat: ' + text); }
+    document.body.removeChild(ta);
+  }
+}
+
 async function adminAddUser() {
-  const name = state.newUserName.trim(), pass = state.newUserPass.trim();
-  if (!name || !pass) { showToast('Vyplňte jméno i heslo.'); return; }
+  const name = state.newUserName.trim();
+  if (!name) { showToast('Vyplňte jméno.'); return; }
   const id = norm(name);
   if (state.data.users.some(u => u.id === id)) { showToast('Tento uživatel už existuje.'); return; }
+  const pass = generatePassword();
   await safeUpdate(f => ({ ...f, users: [...f.users, { id, name, password: pass }] }));
-  setState({ newUserName: '', newUserPass: '' });
-  showToast(`✅ Uživatel ${name} přidán.`);
+  setState({ newUserName: '' });
+  showToast(`✅ ${name} přidán. Heslo: ${pass}`);
 }
 
 async function adminRemoveUser(userId) {
@@ -852,21 +878,21 @@ function renderAdmin() {
   // ── Users ──
   const usersBlock = h('div', { className: 'admin-block' },
     h('p', { className: 'admin-title' }, '👥 Uživatelé'),
-    h('p', { className: 'hint' }, 'Přidejte kolegy — budou se přihlašovat jménem a heslem.'),
+    h('p', { className: 'hint' }, 'Zadejte jméno, heslo se vygeneruje automaticky. Kliknutím na heslo ho zkopírujete.'),
   );
   const nameIn = h('input', { className: 'input', placeholder: 'Jméno', value: state.newUserName,
-    onInput: e => { state.newUserName = e.target.value; }, style: { flex: '1' } });
-  const passIn = h('input', { className: 'input', placeholder: 'Heslo', value: state.newUserPass,
-    onInput: e => { state.newUserPass = e.target.value; },
-    onKeydown: e => { if (e.key === 'Enter') adminAddUser(); }, style: { flex: '1' } });
-  usersBlock.appendChild(h('div', { className: 'row' }, nameIn, passIn,
+    onInput: e => { state.newUserName = e.target.value; },
+    onKeydown: e => { if (e.key === 'Enter') adminAddUser(); } });
+  usersBlock.appendChild(h('div', { className: 'row' }, nameIn,
     h('button', { className: 'btn btn-p', onClick: adminAddUser }, '+ Přidat')));
   if (data.users.length > 0) {
     const ul = h('div', { className: 'a-list' });
     data.users.forEach(u => {
       const voted = data.voters.some(v => v.id === u.id);
-      const info = h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '0' } },
-        h('span', { className: 'a-item-name' }, u.name));
+      const info = h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '0', flexWrap: 'wrap' } },
+        h('span', { className: 'a-item-name' }, u.name),
+        h('button', { className: 'pass-chip', onClick: () => copyToClipboard(u.password), title: 'Kopírovat heslo' },
+          `🔑 ${u.password}`));
       if (voted) info.appendChild(h('span', { className: 'voted-badge' }, 'hlasoval/a'));
       ul.appendChild(h('div', { className: 'a-item' }, info,
         h('button', { className: 'btn-rm', onClick: () => adminRemoveUser(u.id) }, '✕')));
