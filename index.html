@@ -6,6 +6,7 @@
 <title>Firemní lednice – Anketa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -16,43 +17,26 @@
   --red-50: #fef2f2; --red-200: #fca5a5; --red-500: #ef4444;
   --green-50: #ecfdf5; --green-200: #a7f3d0; --green-600: #059669;
 }
-body {
-  font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
-  background: linear-gradient(180deg, var(--sky-100) 0%, var(--sky-50) 40%, #fff 100%);
-  color: var(--slate-800);
-  min-height: 100vh;
-}
+body { font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif; background: linear-gradient(180deg, var(--sky-100) 0%, var(--sky-50) 40%, #fff 100%); color: var(--slate-800); min-height: 100vh; }
 #app { max-width: 540px; margin: 0 auto; padding: 0 16px 40px; }
-
-/* Header */
 .header { text-align: center; padding: 28px 0 6px; }
 .header-icon { font-size: 44px; }
 .header h1 { font-size: 24px; font-weight: 800; color: var(--sky-900); letter-spacing: -0.5px; margin: 4px 0; }
 .header p { font-size: 13px; color: var(--slate-500); }
-
-/* Tabs */
 .tabs { display: flex; gap: 4px; margin: 18px 0 14px; background: var(--slate-200); border-radius: 12px; padding: 4px; }
 .tabs button { flex: 1; padding: 10px 6px; border: none; border-radius: 10px; background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--slate-500); font-family: inherit; transition: all .2s; }
 .tabs button.active { background: #fff; color: var(--sky-900); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-
-/* Toast */
 .toast { background: var(--sky-900); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 12px; animation: fadeIn .2s; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Card */
 .card { background: #fff; border-radius: 16px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
 .card-label { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
 .hint { font-size: 12px; color: var(--slate-400); margin-bottom: 10px; }
-
-/* Inputs */
 .input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 2px solid var(--slate-200); font-size: 14px; font-family: inherit; outline: none; transition: border .2s; box-sizing: border-box; }
 .input:focus { border-color: var(--sky-500); }
 .input-err { border-color: var(--red-500) !important; }
 .row { display: flex; gap: 8px; }
 .select { flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--slate-200); font-size: 13px; font-family: inherit; background: #fff; outline: none; }
 .spacer { height: 8px; }
-
-/* Buttons */
 .btn { padding: 10px 18px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity .15s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn-p { background: linear-gradient(135deg, var(--sky-600), var(--sky-500)); color: #fff; }
@@ -60,37 +44,24 @@ body {
 .btn-tiny { padding: 4px 10px; border-radius: 8px; border: 1px solid var(--slate-300); background: #fff; color: var(--slate-500); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-rm { background: var(--red-50); border: none; border-radius: 8px; width: 28px; height: 28px; cursor: pointer; color: var(--red-500); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .btn-move { background: var(--slate-100); border: none; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; color: var(--slate-500); font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; }
-.btn-move:active { background: var(--slate-200); }
 .btn-edit { background: var(--sky-50); border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; }
 .btn-danger { background: var(--red-500); color: #fff; padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
 .w-full { width: 100%; }
 .mt-sm { margin-top: 14px; }
 .mt-md { margin-top: 16px; }
-
-/* Error text */
 .err { color: var(--red-500); font-size: 13px; margin-top: 8px; }
-
-/* Badge */
 .badge { background: var(--sky-50); border: 2px solid var(--sky-200); border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
-
-/* Pick bar */
-.pick-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 8px 14px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.pick-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px 14px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
 .pick-label { font-size: 12px; color: var(--slate-500); font-weight: 600; }
 .pick-dots { display: flex; gap: 6px; }
 .pick-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--slate-200); transition: all .2s; }
 .pick-dot.filled { background: var(--sky-500); box-shadow: 0 0 6px rgba(14,165,233,.4); }
 .pick-dot.add.filled { background: var(--green-600); box-shadow: 0 0 6px rgba(5,150,105,.4); }
 .pick-num { font-size: 13px; font-weight: 800; color: var(--sky-900); margin-left: auto; }
-
-/* Add own drink */
-.add-own { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 14px; border: 2px dashed var(--sky-200); }
+.add-own { background: #fff; border-radius: 12px; padding: 14px; margin: 10px 0 14px; border: 2px dashed var(--sky-200); }
 .add-own-label { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--sky-900); }
 .add-own-note { font-weight: 400; color: var(--slate-400); font-size: 11px; }
-
-/* Drink grid */
 .pick-hint { font-size: 13px; color: var(--slate-500); margin-bottom: 10px; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.d-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border-radius: 12px; border: 2px solid var(--slate-200); background: #fff; cursor: pointer; transition: all .15s; position: relative; font-family: inherit; font-size: 13px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
 .drink-rows { display: flex; flex-direction: column; gap: 4px; }
 .d-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--slate-200); background: #fff; cursor: pointer; transition: all .15s; font-family: inherit; font-size: 14px; text-align: left; width: 100%; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
 .d-row:active { background: var(--slate-100); }
@@ -98,14 +69,6 @@ body {
 .d-row-emoji { font-size: 18px; flex-shrink: 0; }
 .d-row-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .d-row-tick { color: var(--sky-600); font-weight: 900; font-size: 16px; }
-.d-card:hover { border-color: var(--slate-300); }
-.d-card.selected { border-color: var(--sky-600); background: var(--sky-50); box-shadow: 0 0 0 3px rgba(2,132,199,.15); }
-.d-emoji { font-size: 26px; }
-.d-name { font-weight: 600; font-size: 12px; text-align: center; line-height: 1.2; }
-.d-votes { font-size: 11px; color: var(--slate-400); }
-.d-check { position: absolute; top: 5px; right: 7px; background: var(--sky-600); color: #fff; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-
-/* Pick summary */
 .pick-summary { margin-top: 14px; padding: 12px 14px; background: var(--sky-50); border-radius: 10px; border: 1px solid var(--sky-200); }
 .pick-sum-label { font-size: 12px; font-weight: 700; color: var(--sky-900); margin-bottom: 8px; }
 .pick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -113,8 +76,6 @@ body {
 .pick-tag.new { border-color: var(--green-200); background: var(--green-50); }
 .new-badge { font-size: 9px; font-weight: 700; color: var(--green-600); background: var(--green-200); padding: 1px 5px; border-radius: 4px; text-transform: uppercase; }
 .pick-tag-x { background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 12px; font-weight: 700; padding: 0; margin-left: 2px; }
-
-/* Results */
 .empty { text-align: center; padding: 40px 0; }
 .empty-icon { font-size: 40px; }
 .empty-text { color: var(--slate-400); font-size: 14px; margin-top: 8px; }
@@ -131,11 +92,6 @@ body {
 .res-votes { font-size: 12px; color: var(--slate-500); font-weight: 600; }
 .bar-bg { height: 7px; border-radius: 4px; background: var(--slate-100); overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 4px; transition: width .4s ease; min-width: 2px; }
-details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; font-weight: 600; margin-top: 16px; }
-.det-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
-.det-item { font-size: 13px; padding: 6px 10px; background: #f8fafc; border-radius: 8px; }
-
-/* Admin */
 .admin-block { margin-bottom: 24px; }
 .admin-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
 .a-list { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
@@ -144,35 +100,27 @@ details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; fon
 .a-item-sub { font-size: 11px; color: var(--slate-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .a-vote-count { font-weight: 400; color: var(--slate-400); font-size: 12px; }
 .voted-badge { font-size: 10px; font-weight: 600; color: var(--sky-600); background: var(--sky-100); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
-.pass-chip { font-family: 'Courier New', monospace; font-size: 12px; font-weight: 700; color: var(--sky-900); background: var(--sky-50); border: 1px solid var(--sky-200); padding: 3px 8px; border-radius: 6px; cursor: pointer; font-family: monospace; letter-spacing: 0.5px; touch-action: manipulation; }
+.pass-chip { font-family: monospace; font-size: 12px; font-weight: 700; color: var(--sky-900); background: var(--sky-50); border: 1px solid var(--sky-200); padding: 3px 8px; border-radius: 6px; cursor: pointer; letter-spacing: 0.5px; touch-action: manipulation; }
 .pass-chip:active { background: var(--sky-100); }
 .merge-preview { font-size: 12px; color: var(--slate-500); margin-top: 8px; line-height: 1.5; }
-.danger { margin-top: 20px; padding: 16px; border-radius: 12px; border: 2px dashed var(--red-200); background: var(--red-50); }
 .active-warn { margin-bottom: 20px; padding: 14px 16px; border-radius: 12px; background: #fef3c7; border: 2px solid #fcd34d; }
 .active-warn-title { font-size: 14px; font-weight: 800; color: #92400e; margin-bottom: 6px; }
 .active-warn-text { font-size: 12px; color: #78350f; margin-bottom: 10px; line-height: 1.4; }
 .active-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .active-chip { display: inline-flex; align-items: center; padding: 4px 10px; background: #fff; border-radius: 8px; font-size: 12px; font-weight: 700; color: #78350f; border: 1px solid #fcd34d; }
+.danger { margin-top: 20px; padding: 16px; border-radius: 12px; border: 2px dashed var(--red-200); background: var(--red-50); }
 .danger-label { font-size: 11px; font-weight: 700; color: var(--red-500); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-
-/* Loading */
 .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; }
 .loading-icon { font-size: 48px; margin-bottom: 12px; animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 .loading-text { color: var(--slate-500); font-size: 14px; }
-
-/* Footer */
 .footer { text-align: center; font-size: 12px; color: var(--slate-400); margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--slate-200); }
-
-/* Blocking overlay during submit */
-.overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn .15s; }
+.overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn .15s; }
 .overlay-box { background: #fff; border-radius: 16px; padding: 28px 36px; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.3); max-width: 320px; }
 .overlay-spinner { width: 44px; height: 44px; border: 4px solid var(--slate-200); border-top-color: var(--sky-500); border-radius: 50%; animation: spin 0.8s linear infinite; }
 .overlay-text { font-size: 16px; font-weight: 700; color: var(--sky-900); margin: 0; }
 .overlay-sub { font-size: 12px; color: var(--slate-500); margin: 0; text-align: center; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* Setup screen */
 .setup-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,.08); margin-top: 20px; }
 .setup-card h2 { font-size: 18px; font-weight: 800; color: var(--sky-900); margin-bottom: 4px; }
 .setup-card p { font-size: 13px; color: var(--slate-500); margin-bottom: 16px; }
@@ -184,36 +132,34 @@ details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; fon
 <div id="app"></div>
 <script>
 // ╔══════════════════════════════════════════════════════════╗
-// ║  KONFIGURACE — vyplňte údaje z jsonbin.io               ║
+// ║  KONFIGURACE — vyplňte po založení Supabase projektu     ║
 // ╚══════════════════════════════════════════════════════════╝
 const CONFIG = {
-  JSONBIN_BIN_ID:   '69dfdfbfaaba88219702568f',
-  JSONBIN_API_KEY:  '$2a$10$1PoDSoz3RJq6vxaq.jRw2Oc0j/L8AH9ZxVr98dl7FSQ6dMwXJuAD2',
-  MAX_VOTES:        3,  // hlasy pro existující nápoje
-  MAX_ADDS:         1,  // max počet nově přidaných nápojů (každý = +1 hlas navíc)
+  SUPABASE_URL:     'https://vcomrwktliceefyigoqg.supabase.co',  // např. https://xxxxxxxx.supabase.co
+  SUPABASE_ANON:    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjb21yd2t0bGljZWVmeWlnb3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMzEyMTYsImV4cCI6MjA5MTkwNzIxNn0.Nwi3neRrZWS8bbMZRJV2FLB8A8XqxxMrwAtMrbSO2nc',  // anon public key (dlouhý JWT)
+  MAX_VOTES:        3,
+  MAX_ADDS:         1,
 };
 // ════════════════════════════════════════════════════════════
 
 const EMOJIS = ['🥤','🧃','🍺','☕','🫧','🍹','🧊','💧','🍋','🫖','🥛','🍵','🫗','🍷','🥂','🧋'];
 const emoji = i => EMOJIS[i % EMOJIS.length];
 const norm = s => s.trim().toLowerCase().replace(/\s+/g, ' ');
-const INIT_DATA = { drinks: [], votes: {}, voters: [], users: [], adminPin: 'lednice2026' };
 
-// ── State ──
+let supa = null;
 let state = {
-  data: null, loading: true, tab: 'vote', toast: '',
+  data: { drinks: [], votes: {}, voters: [], users: [], activeVoters: [], adminPin: 'lednice2026' },
+  loading: true, loadError: false, tab: 'vote', toast: '', submitting: false,
   loginName: '', loginPass: '', loginError: '', currentUser: null,
   picks: [], newDrinkInput: '',
   adminUnlocked: false, pinInput: '', pinError: false,
-  adminNewDrink: '', newUserName: '', newUserPass: '',
+  adminNewDrink: '', newUserName: '',
   mergeA: '', mergeB: '',
+  newAdminPin: '',
 };
 
 function setState(patch) {
-  // During submit, freeze the UI: ignore data updates to prevent flicker.
-  // Only allow changes to submitting flag and toast.
   if (state.submitting && 'data' in patch && !('submitting' in patch)) {
-    // Still apply non-data patches
     const { data, ...rest } = patch;
     Object.assign(state, rest);
   } else {
@@ -222,119 +168,6 @@ function setState(patch) {
   render();
 }
 
-// ── JSONBin API ──
-const API_BASE = 'https://api.jsonbin.io/v3/b';
-const headers = () => ({
-  'Content-Type': 'application/json',
-  'X-Master-Key': CONFIG.JSONBIN_API_KEY,
-});
-
-async function loadData() {
-  try {
-    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
-    if (!r.ok) {
-      console.error('Load error:', r.status);
-      setState({ data: null, loading: false, loadError: true });
-      showToast('Nepodařilo se načíst data. Zkuste obnovit stránku.');
-      return;
-    }
-    const json = await r.json();
-    if (!json.record) {
-      setState({ data: INIT_DATA, loading: false, loadError: false });
-      return;
-    }
-    const rec = json.record;
-    if (!rec.adminPin) rec.adminPin = 'lednice2026';
-    setState({ data: rec, loading: false, loadError: false });
-  } catch (e) {
-    console.error('Load error:', e);
-    setState({ data: null, loading: false, loadError: true });
-    showToast('Chyba sítě. Zkuste obnovit stránku.');
-  }
-}
-
-async function saveData(newData) {
-  try {
-    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}`, {
-      method: 'PUT',
-      headers: { ...headers(), 'X-Bin-Versioning': 'false' },
-      body: JSON.stringify(newData),
-    });
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({}));
-      console.error('Save error:', r.status, err);
-      showToast('Chyba: ' + (err.message || r.statusText || r.status));
-      return false;
-    }
-    setState({ data: newData });
-    return true;
-  } catch (e) {
-    console.error('Save error:', e);
-    showToast('Chyba sítě při ukládání!');
-    return false;
-  }
-}
-
-// Re-read before write to avoid overwriting concurrent changes
-async function safeUpdate(updateFn, retries = 3) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      // 1. Read fresh data
-      const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
-      if (!r.ok) {
-        showToast('Nepodařilo se ověřit aktuální data. Zkuste to znovu.');
-        return false;
-      }
-      const json = await r.json();
-      if (!json.record) {
-        showToast('Bin je prázdný — nelze uložit.');
-        return false;
-      }
-      const fresh = json.record;
-      if (!fresh.adminPin) fresh.adminPin = 'lednice2026';
-
-      // 2. Apply changes
-      const updated = updateFn(fresh);
-      if (!updated) return false;
-
-      // 3. Write
-      const saved = await saveData(updated);
-      if (!saved) return false;
-
-      // 4. Verify — re-read and check
-      const vr = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
-      if (vr.ok) {
-        const vJson = await vr.json();
-        if (vJson.record) {
-          const serverVoters = (vJson.record.voters || []).length;
-          const ourVoters = (updated.voters || []).length;
-          const serverDrinks = (vJson.record.drinks || []).length;
-          const ourDrinks = (updated.drinks || []).length;
-          if (serverVoters >= ourVoters && serverDrinks >= ourDrinks) {
-            // Data matches or someone else added more — success
-            setState({ data: vJson.record });
-            return true;
-          }
-          // Mismatch — someone else overwrote, retry
-          console.warn(`Race condition detected (attempt ${attempt}/${retries}), retrying...`);
-          if (attempt < retries) continue;
-        }
-      }
-      // Verification read failed but save succeeded — accept it
-      return true;
-    } catch (e) {
-      console.error('Safe update error:', e);
-      if (attempt === retries) {
-        showToast('Chyba sítě při ukládání!');
-        return false;
-      }
-    }
-  }
-  showToast('Nepodařilo se uložit po opakovaných pokusech.');
-  return false;
-}
-
-// ── Toast ──
 let toastTimer;
 function showToast(msg) {
   clearTimeout(toastTimer);
@@ -342,61 +175,61 @@ function showToast(msg) {
   toastTimer = setTimeout(() => setState({ toast: '' }), 2800);
 }
 
-// ── Helpers ──
 function voteLabel(v) { return v === 1 ? 'hlas' : (v >= 2 && v <= 4 ? 'hlasy' : 'hlasů'); }
+function rankIcon(i, v) { if (v === 0) return `${i + 1}.`; return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`; }
 
-function rankIcon(i, v) {
-  if (v === 0) return `${i + 1}.`;
-  return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+// ── Supabase data loading ──
+async function loadData() {
+  try {
+    const [drinksRes, votersRes, usersRes, activeRes, settingsRes] = await Promise.all([
+      supa.from('drinks').select('*').order('position'),
+      supa.from('voters').select('*'),
+      supa.from('users').select('*'),
+      supa.from('active_voters').select('*').gte('ts', new Date(Date.now() - 30000).toISOString()),
+      supa.from('settings').select('*').eq('key', 'admin_pin').maybeSingle(),
+    ]);
+    if (drinksRes.error) throw drinksRes.error;
+    if (votersRes.error) throw votersRes.error;
+    if (usersRes.error) throw usersRes.error;
+
+    const drinks = (drinksRes.data || []).map(d => d.name);
+    const votes = {};
+    (drinksRes.data || []).forEach(d => { votes[d.name] = d.votes || 0; });
+    const voters = (votersRes.data || []).map(v => ({ id: v.id, name: v.name, picks: v.picks || [] }));
+    const users = (usersRes.data || []).map(u => ({ id: u.id, name: u.name, password: u.password }));
+    const activeVoters = (activeRes.data || []).map(a => ({ id: a.id, name: a.name, ts: new Date(a.ts).getTime() }));
+    const adminPin = settingsRes.data?.value || 'lednice2026';
+
+    setState({ data: { drinks, votes, voters, users, activeVoters, adminPin }, loading: false, loadError: false });
+  } catch (e) {
+    console.error('Load error:', e);
+    setState({ loading: false, loadError: true });
+    showToast('Chyba při načítání. Zkuste znovu.');
+  }
 }
 
-// ── Actions ──
-const HEARTBEAT_INTERVAL = 15000; // 15s
-const STALE_THRESHOLD = 30000;    // 30s — older than this = stale
+// ── Heartbeat for active voters ──
+const HEARTBEAT_INTERVAL = 15000;
 let heartbeatTimer = null;
 
 async function heartbeatPing() {
   if (!state.currentUser) return;
-  const userId = state.currentUser.id;
-  const userName = state.currentUser.name;
   try {
-    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
-    if (!r.ok) return;
-    const json = await r.json();
-    if (!json.record) return;
-    const fresh = json.record;
-    const active = (fresh.activeVoters || []).filter(v => v.id !== userId);
-    active.push({ id: userId, name: userName, ts: Date.now() });
-    await saveData({ ...fresh, activeVoters: active });
-  } catch (e) {
-    console.warn('Heartbeat failed:', e);
-  }
+    await supa.from('active_voters').upsert({
+      id: state.currentUser.id, name: state.currentUser.name, ts: new Date().toISOString(),
+    });
+  } catch (e) { console.warn('Heartbeat failed:', e); }
 }
 
-function startHeartbeat() {
-  stopHeartbeat();
-  heartbeatPing();
-  heartbeatTimer = setInterval(heartbeatPing, HEARTBEAT_INTERVAL);
-}
-
-function stopHeartbeat() {
-  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
-}
+function startHeartbeat() { stopHeartbeat(); heartbeatPing(); heartbeatTimer = setInterval(heartbeatPing, HEARTBEAT_INTERVAL); }
+function stopHeartbeat() { if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; } }
 
 async function clearActiveVoter(userId) {
-  try {
-    const r = await fetch(`${API_BASE}/${CONFIG.JSONBIN_BIN_ID}/latest`, { headers: headers() });
-    if (!r.ok) return;
-    const json = await r.json();
-    if (!json.record) return;
-    const fresh = json.record;
-    const active = (fresh.activeVoters || []).filter(v => v.id !== userId);
-    await saveData({ ...fresh, activeVoters: active });
-  } catch (e) {
-    console.warn('Clear active voter failed:', e);
-  }
+  try { await supa.from('active_voters').delete().eq('id', userId); }
+  catch (e) { console.warn('Clear active voter failed:', e); }
 }
 
+// ── Login/Logout ──
 function doLogin() {
   const { loginName, loginPass, data } = state;
   if (!loginName.trim() || !loginPass.trim()) { setState({ loginError: 'Vyplňte jméno i heslo.' }); return; }
@@ -415,16 +248,11 @@ function doLogout() {
   setState({ currentUser: null, picks: [], newDrinkInput: '' });
 }
 
-// Cleanup on tab close
-window.addEventListener('beforeunload', () => {
-  stopHeartbeat();
-  // Note: we don't clear activeVoter on close because async fetch won't complete.
-  // Stale threshold (30s) will auto-remove them.
-});
+window.addEventListener('beforeunload', () => { stopHeartbeat(); });
 
-// Split picks by type
+// ── Vote picking ──
 function countPicks() {
-  const existing = (state.data?.drinks) || [];
+  const existing = state.data.drinks || [];
   const votes = state.picks.filter(p => existing.some(d => norm(d) === norm(p)));
   const adds = state.picks.filter(p => !existing.some(d => norm(d) === norm(p)));
   return { votes, adds };
@@ -445,77 +273,83 @@ function addOwnDrink() {
   if (!name) return;
   const existing = state.data.drinks.find(d => norm(d) === norm(name));
   if (existing) {
-    // It's an existing drink — add as vote
     const { votes } = countPicks();
     if (state.picks.includes(existing)) { showToast(`„${existing}" už máš vybraný.`); setState({ newDrinkInput: '' }); return; }
-    if (votes.length >= CONFIG.MAX_VOTES) { showToast(`„${existing}" už existuje, ale máš maximum hlasů (${CONFIG.MAX_VOTES}).`); setState({ newDrinkInput: '' }); return; }
+    if (votes.length >= CONFIG.MAX_VOTES) { showToast(`„${existing}" už existuje, ale máš maximum hlasů.`); setState({ newDrinkInput: '' }); return; }
     setState({ picks: [...state.picks, existing], newDrinkInput: '' });
     showToast(`„${existing}" už existuje — přidán hlas.`);
     return;
   }
-  // New drink — check adds limit
   const { adds } = countPicks();
-  if (adds.length >= CONFIG.MAX_ADDS) {
-    showToast(`Můžeš přidat max. ${CONFIG.MAX_ADDS} nový nápoj.`); return;
-  }
+  if (adds.length >= CONFIG.MAX_ADDS) { showToast(`Můžeš přidat max. ${CONFIG.MAX_ADDS} nový nápoj.`); return; }
   const inPicks = state.picks.find(p => norm(p) === norm(name));
   if (inPicks) { showToast(`„${inPicks}" už máš vybraný.`); setState({ newDrinkInput: '' }); return; }
   setState({ picks: [...state.picks, name], newDrinkInput: '' });
 }
 
+// ── Submit vote (ATOMIC via RPC) ──
 async function submitVote() {
   if (state.picks.length === 0) { showToast('Vyber nebo přidej alespoň 1 nápoj!'); return; }
   if (!state.currentUser || state.submitting) return;
   setState({ submitting: true });
-  const userId = state.currentUser.id;
-  const userName = state.currentUser.name;
-  const picks = [...state.picks];
-
-  const ok = await safeUpdate(fresh => {
-    if (fresh.voters.some(v => v.id === userId)) { showToast('Už jste hlasoval/a!'); return null; }
-    const newDrinks = [...fresh.drinks];
-    const newVotes = { ...fresh.votes };
-    picks.forEach(p => {
-      if (!newDrinks.find(d => norm(d) === norm(p))) { newDrinks.push(p); newVotes[p] = 0; }
+  try {
+    const { error } = await supa.rpc('submit_vote', {
+      voter_id: state.currentUser.id,
+      voter_name: state.currentUser.name,
+      voter_picks: state.picks,
     });
-    const normalizedPicks = picks.map(p => newDrinks.find(d => norm(d) === norm(p)) || p);
-    normalizedPicks.forEach(p => { newVotes[p] = (newVotes[p] || 0) + 1; });
-    const activeVoters = (fresh.activeVoters || []).filter(v => v.id !== userId);
-    return { ...fresh, drinks: newDrinks, votes: newVotes, activeVoters,
-      voters: [...fresh.voters, { id: userId, name: userName, picks: normalizedPicks }] };
-  });
-
-  if (ok) {
+    if (error) throw error;
     stopHeartbeat();
+    await clearActiveVoter(state.currentUser.id);
+    await loadData();
     setState({ picks: [], currentUser: null, tab: 'results', submitting: false });
     showToast('🎉 Díky za hlas!');
-  } else {
+  } catch (e) {
+    console.error('Submit error:', e);
     setState({ submitting: false });
+    if (e.message && e.message.includes('already voted')) {
+      showToast('Už jste hlasoval/a!');
+    } else {
+      showToast('Chyba při odesílání. Zkuste znovu.');
+    }
   }
 }
 
+// ── Admin ──
 function tryUnlockAdmin() {
   const pin = state.data?.adminPin || 'lednice2026';
   if (state.pinInput === pin) setState({ adminUnlocked: true, pinError: false, pinInput: '' });
   else setState({ pinError: true });
 }
 
+async function withLoading(fn, successMsg) {
+  try {
+    await fn();
+    await loadData();
+    if (successMsg) showToast(successMsg);
+  } catch (e) {
+    console.error(e);
+    showToast('Chyba: ' + (e.message || 'neznámá'));
+  }
+}
+
 async function adminAddDrink() {
   const name = state.adminNewDrink.trim();
   if (!name) return;
   if (state.data.drinks.some(d => norm(d) === norm(name))) { showToast('Tento nápoj už existuje.'); return; }
-  await safeUpdate(f => ({ ...f, drinks: [...f.drinks, name], votes: { ...f.votes, [name]: 0 } }));
+  const maxPos = Math.max(0, ...state.data.drinks.map((_, i) => i)) + 1;
+  await withLoading(async () => {
+    const { error } = await supa.from('drinks').insert({ name, votes: 0, position: maxPos });
+    if (error) throw error;
+  }, `✅ ${name} přidán!`);
   setState({ adminNewDrink: '' });
-  showToast(`✅ ${name} přidán!`);
 }
 
 async function adminRemoveDrink(drink) {
-  await safeUpdate(f => ({
-    ...f, drinks: f.drinks.filter(d => d !== drink),
-    votes: Object.fromEntries(Object.entries(f.votes).filter(([k]) => k !== drink)),
-    voters: f.voters.map(v => ({ ...v, picks: (v.picks || []).filter(p => p !== drink) })),
-  }));
-  showToast(`🗑 ${drink} odstraněn.`);
+  await withLoading(async () => {
+    const { error } = await supa.rpc('remove_drink', { drink_name: drink });
+    if (error) throw error;
+  }, `🗑 ${drink} odstraněn.`);
 }
 
 async function adminRenameDrink(oldName) {
@@ -525,26 +359,94 @@ async function adminRenameDrink(oldName) {
   if (state.data.drinks.some(d => d !== oldName && norm(d) === norm(trimmed))) {
     showToast('Nápoj s tímto názvem už existuje.'); return;
   }
-  await safeUpdate(f => {
-    const drinks = f.drinks.map(d => d === oldName ? trimmed : d);
-    const votes = {};
-    Object.entries(f.votes).forEach(([k, v]) => { votes[k === oldName ? trimmed : k] = v; });
-    const voters = f.voters.map(v => ({
-      ...v, picks: (v.picks || []).map(p => p === oldName ? trimmed : p),
-    }));
-    return { ...f, drinks, votes, voters };
-  });
-  showToast(`✅ Přejmenováno na „${trimmed}".`);
+  await withLoading(async () => {
+    const { error } = await supa.rpc('rename_drink', { old_name: oldName, new_name: trimmed });
+    if (error) throw error;
+  }, `✅ Přejmenováno na „${trimmed}".`);
 }
 
 async function adminMoveDrink(index, dir) {
   const newIndex = index + dir;
   if (newIndex < 0 || newIndex >= state.data.drinks.length) return;
-  await safeUpdate(f => {
-    const drinks = [...f.drinks];
-    [drinks[index], drinks[newIndex]] = [drinks[newIndex], drinks[index]];
-    return { ...f, drinks };
+  const drinks = [...state.data.drinks];
+  [drinks[index], drinks[newIndex]] = [drinks[newIndex], drinks[index]];
+  await withLoading(async () => {
+    const updates = drinks.map((name, i) => supa.from('drinks').update({ position: i }).eq('name', name));
+    await Promise.all(updates);
   });
+}
+
+async function adminRemoveVoter(voterId) {
+  const voter = state.data.voters.find(v => v.id === voterId);
+  if (!voter) return;
+  await withLoading(async () => {
+    const { error } = await supa.rpc('remove_voter', { voter_id: voterId });
+    if (error) throw error;
+  }, `🗑 Hlas od „${voter.name}" smazán.`);
+}
+
+function generatePassword() {
+  const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
+  let p = ''; const arr = new Uint32Array(6); crypto.getRandomValues(arr);
+  for (let i = 0; i < 6; i++) p += chars[arr[i] % chars.length];
+  return p;
+}
+
+async function copyToClipboard(text) {
+  try { await navigator.clipboard.writeText(text); showToast('📋 Zkopírováno: ' + text); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('📋 Zkopírováno: ' + text); } catch { showToast('Nelze zkopírovat: ' + text); }
+    document.body.removeChild(ta);
+  }
+}
+
+async function adminAddUser() {
+  const name = state.newUserName.trim();
+  if (!name) { showToast('Vyplňte jméno.'); return; }
+  const id = norm(name);
+  if (state.data.users.some(u => u.id === id)) { showToast('Tento uživatel už existuje.'); return; }
+  const pass = generatePassword();
+  await withLoading(async () => {
+    const { error } = await supa.from('users').insert({ id, name, password: pass });
+    if (error) throw error;
+  }, `✅ ${name} přidán. Heslo: ${pass}`);
+  setState({ newUserName: '' });
+}
+
+async function adminRemoveUser(userId) {
+  await withLoading(async () => {
+    const { error } = await supa.from('users').delete().eq('id', userId);
+    if (error) throw error;
+  }, 'Uživatel odebrán.');
+}
+
+async function adminMerge() {
+  const { mergeA, mergeB } = state;
+  if (!mergeA || !mergeB || mergeA === mergeB) { showToast('Vyberte dva různé nápoje.'); return; }
+  await withLoading(async () => {
+    const { error } = await supa.rpc('merge_drinks', { keep_name: mergeA, merge_name: mergeB });
+    if (error) throw error;
+  }, `✅ „${mergeB}" sloučen do „${mergeA}".`);
+  setState({ mergeA: '', mergeB: '' });
+}
+
+async function adminChangePin() {
+  const pin = (state.newAdminPin || '').trim();
+  if (!pin || pin.length < 4) { showToast('Heslo musí mít alespoň 4 znaky.'); return; }
+  await withLoading(async () => {
+    const { error } = await supa.from('settings').upsert({ key: 'admin_pin', value: pin });
+    if (error) throw error;
+  }, '✅ Heslo správce změněno.');
+  setState({ newAdminPin: '' });
+}
+
+async function resetAll() {
+  if (!confirm('Opravdu smazat VŠECHNA data ankety?')) return;
+  await withLoading(async () => {
+    const { error } = await supa.rpc('reset_all');
+    if (error) throw error;
+  }, 'Anketa resetována.');
 }
 
 function adminExportCSV() {
@@ -557,91 +459,9 @@ function adminExportCSV() {
   lines.push(`Celkem hlasů;${Object.values(data.votes).reduce((a, b) => a + b, 0)}`);
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'anketa-lednice.csv'; a.click();
+  const a = document.createElement('a'); a.href = url; a.download = 'anketa-lednice.csv'; a.click();
   URL.revokeObjectURL(url);
   showToast('📥 CSV exportováno.');
-}
-
-async function adminRemoveVoter(voterId) {
-  const voter = state.data.voters.find(v => v.id === voterId);
-  if (!voter) return;
-  await safeUpdate(f => {
-    const nv = { ...f.votes };
-    (voter.picks || []).forEach(p => { if (nv[p] !== undefined) nv[p] = Math.max(0, (nv[p] || 0) - 1); });
-    return { ...f, votes: nv, voters: f.voters.filter(v => v.id !== voterId) };
-  });
-  showToast(`🗑 Hlas od „${voter.name}" smazán.`);
-}
-
-function generatePassword() {
-  const chars = 'abcdefghijkmnpqrstuvwxyz23456789'; // no 0/O/1/l/i for readability
-  let p = '';
-  const arr = new Uint32Array(6);
-  crypto.getRandomValues(arr);
-  for (let i = 0; i < 6; i++) p += chars[arr[i] % chars.length];
-  return p;
-}
-
-async function copyToClipboard(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast('📋 Zkopírováno: ' + text);
-  } catch {
-    // Fallback for older browsers
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); showToast('📋 Zkopírováno: ' + text); }
-    catch { showToast('Nelze zkopírovat: ' + text); }
-    document.body.removeChild(ta);
-  }
-}
-
-async function adminAddUser() {
-  const name = state.newUserName.trim();
-  if (!name) { showToast('Vyplňte jméno.'); return; }
-  const id = norm(name);
-  if (state.data.users.some(u => u.id === id)) { showToast('Tento uživatel už existuje.'); return; }
-  const pass = generatePassword();
-  await safeUpdate(f => ({ ...f, users: [...f.users, { id, name, password: pass }] }));
-  setState({ newUserName: '' });
-  showToast(`✅ ${name} přidán. Heslo: ${pass}`);
-}
-
-async function adminRemoveUser(userId) {
-  await safeUpdate(f => ({ ...f, users: f.users.filter(u => u.id !== userId) }));
-  showToast('Uživatel odebrán.');
-}
-
-async function adminMerge() {
-  const { mergeA, mergeB } = state;
-  if (!mergeA || !mergeB || mergeA === mergeB) { showToast('Vyberte dva různé nápoje.'); return; }
-  await safeUpdate(f => {
-    const nv = { ...f.votes };
-    nv[mergeA] = (nv[mergeA] || 0) + (nv[mergeB] || 0);
-    delete nv[mergeB];
-    const voters = f.voters.map(v => ({
-      ...v, picks: (v.picks || []).map(p => p === mergeB ? mergeA : p).filter((p, i, a) => a.indexOf(p) === i),
-    }));
-    return { ...f, drinks: f.drinks.filter(d => d !== mergeB), votes: nv, voters };
-  });
-  showToast(`✅ „${mergeB}" sloučen do „${mergeA}".`);
-  setState({ mergeA: '', mergeB: '' });
-}
-
-async function adminChangePin() {
-  const pin = (state.newAdminPin || '').trim();
-  if (!pin || pin.length < 4) { showToast('Heslo musí mít alespoň 4 znaky.'); return; }
-  await safeUpdate(f => ({ ...f, adminPin: pin }));
-  setState({ newAdminPin: '' });
-  showToast('✅ Heslo správce změněno.');
-}
-
-async function resetAll() {
-  if (!confirm('Opravdu smazat VŠECHNA data ankety (nápoje, hlasy, uživatele)?')) return;
-  const currentPin = state.data?.adminPin || 'lednice2026';
-  await saveData({ ...INIT_DATA, adminPin: currentPin });
-  showToast('Anketa resetována.');
 }
 
 // ── Render ──
@@ -666,55 +486,40 @@ function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
 
-  // Check config
-  if (!CONFIG.JSONBIN_BIN_ID || !CONFIG.JSONBIN_API_KEY) {
-    app.appendChild(renderSetup());
-    return;
+  if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON) {
+    app.appendChild(renderSetup()); return;
   }
 
   if (state.loading) {
-    app.appendChild(h('div', { className: 'loading' },
-      h('div', { className: 'loading-icon' }, '🧊'),
-      h('p', { className: 'loading-text' }, 'Načítám anketu…'),
-    ));
+    app.appendChild(h('div', { className: 'loading' }, h('div', { className: 'loading-icon' }, '🧊'), h('p', { className: 'loading-text' }, 'Načítám anketu…')));
     return;
   }
 
-  if (!state.data) {
+  if (state.loadError) {
     app.appendChild(h('div', { className: 'loading' },
       h('div', { className: 'loading-icon' }, '⚠️'),
       h('p', { className: 'loading-text' }, 'Nepodařilo se načíst data.'),
-      h('button', { className: 'btn btn-p mt-md', onClick: () => { setState({ loading: true }); loadData(); } }, '🔄 Zkusit znovu'),
+      h('button', { className: 'btn btn-p mt-md', onClick: () => { setState({ loading: true, loadError: false }); loadData(); } }, '🔄 Zkusit znovu'),
     ));
     return;
   }
 
-  // Header
-  app.appendChild(h('div', { className: 'header' },
-    h('div', { className: 'header-icon' }, '🧊'),
-    h('h1', null, 'Firemní lednice'),
-    h('p', null, 'Co tam chcete mít? Hlasujte!'),
-  ));
+  app.appendChild(h('div', { className: 'header' }, h('div', { className: 'header-icon' }, '🧊'), h('h1', null, 'Firemní lednice'), h('p', null, 'Co tam chcete mít? Hlasujte!')));
 
-  // Tabs
   const tabs = h('div', { className: 'tabs' });
   [['vote', '🗳 Hlasovat'], ['results', '📊 Výsledky'], ['admin', '⚙️ Správa']].forEach(([id, label]) => {
-    const btn = h('button', { className: state.tab === id ? 'active' : '', onClick: () => setState({ tab: id }) }, label);
-    tabs.appendChild(btn);
+    tabs.appendChild(h('button', { className: state.tab === id ? 'active' : '', onClick: () => setState({ tab: id }) }, label));
   });
   app.appendChild(tabs);
 
-  // Toast
   if (state.toast) app.appendChild(h('div', { className: 'toast' }, state.toast));
 
-  // Tab content
   if (state.tab === 'vote') app.appendChild(renderVote());
   else if (state.tab === 'results') app.appendChild(renderResults());
   else if (state.tab === 'admin') app.appendChild(renderAdmin());
 
   app.appendChild(h('div', { className: 'footer' }, 'Sdílejte odkaz s kolegy — každý může hlasovat jednou.'));
 
-  // Blocking overlay during submit
   if (state.submitting) {
     app.appendChild(h('div', { className: 'overlay' },
       h('div', { className: 'overlay-box' },
@@ -728,22 +533,17 @@ function render() {
 
 function renderSetup() {
   return h('div', null,
-    h('div', { className: 'header' },
-      h('div', { className: 'header-icon' }, '🧊'),
-      h('h1', null, 'Firemní lednice'),
-    ),
+    h('div', { className: 'header' }, h('div', { className: 'header-icon' }, '🧊'), h('h1', null, 'Firemní lednice')),
     h('div', { className: 'setup-card' },
-      h('h2', null, '⚙️ Počáteční nastavení'),
-      h('p', null, 'Anketa potřebuje databázi. Nastavení zabere 2 minuty:'),
+      h('h2', null, '⚙️ Počáteční nastavení Supabase'),
+      h('p', null, 'Anketa používá Supabase (zdarma). Podrobný návod najdete v README.md přiloženém k tomuto souboru.'),
       h('ol', null,
-        h('li', null, 'Jděte na ', h('a', { href: 'https://jsonbin.io', target: '_blank' }, 'jsonbin.io'), ' a vytvořte si bezplatný účet.'),
-        h('li', null, 'V dashboardu klikněte na ', h('strong', null, 'API Keys'), ' a zkopírujte svůj ', h('code', null, 'X-Master-Key'), '.'),
-        h('li', null, 'Vytvořte nový bin s obsahem: ', h('code', null, '{"drinks":[],"votes":{},"voters":[],"users":[],"adminPin":"lednice2026"}'), ''),
-        h('li', null, 'Zkopírujte ', h('strong', null, 'Bin ID'), ' (z URL nebo z detailu binu).'),
-        h('li', null, 'Otevřete tento HTML soubor a nahoře ve scriptu vyplňte ', h('code', null, 'JSONBIN_BIN_ID'), ' a ', h('code', null, 'JSONBIN_API_KEY'), '.'),
-        h('li', null, 'Uložte, pushněte na GitHub a zapněte GitHub Pages.'),
+        h('li', null, 'Založte si účet na ', h('a', { href: 'https://supabase.com', target: '_blank' }, 'supabase.com')),
+        h('li', null, 'Vytvořte nový projekt'),
+        h('li', null, 'V SQL editoru spusťte SQL skript z README.md'),
+        h('li', null, 'Z Project Settings → API zkopírujte ', h('strong', null, 'URL'), ' a ', h('strong', null, 'anon public key')),
+        h('li', null, 'Vyplňte je nahoře ve scriptu do ', h('code', null, 'CONFIG')),
       ),
-      h('p', null, 'Po vyplnění konfigurace se anketa automaticky spustí.'),
     ),
   );
 }
@@ -753,7 +553,6 @@ function renderVote() {
   const hasVoted = currentUser && !state.submitting && data.voters.some(v => v.id === currentUser.id);
 
   if (!currentUser) {
-    // Login form
     const nameInput = h('input', { className: 'input', placeholder: 'Jméno', value: state.loginName,
       onInput: e => { state.loginName = e.target.value; state.loginError = ''; },
       onKeydown: e => { if (e.key === 'Enter') document.getElementById('lp')?.focus(); } });
@@ -779,56 +578,42 @@ function renderVote() {
   }
 
   const content = h('div', null);
-
-  // Badge
   content.appendChild(h('div', { className: 'badge' },
     h('span', null, 'Přihlášen: ', h('strong', null, currentUser.name)),
     h('button', { className: 'btn-tiny', onClick: doLogout }, 'Odhlásit'),
   ));
 
-  // Pick bars — two separate counters
   const { votes: voteP, adds: addP } = countPicks();
   const voteDots = h('div', { className: 'pick-dots' });
   for (let i = 0; i < CONFIG.MAX_VOTES; i++) voteDots.appendChild(h('span', { className: `pick-dot ${i < voteP.length ? 'filled' : ''}` }));
-  content.appendChild(h('div', { className: 'pick-bar' },
-    h('span', { className: 'pick-label' }, '🗳 Hlasy:'), voteDots,
-    h('span', { className: 'pick-num' }, `${voteP.length}/${CONFIG.MAX_VOTES}`),
-  ));
+  content.appendChild(h('div', { className: 'pick-bar' }, h('span', { className: 'pick-label' }, '🗳 Hlasy:'), voteDots, h('span', { className: 'pick-num' }, `${voteP.length}/${CONFIG.MAX_VOTES}`)));
 
   const addDots = h('div', { className: 'pick-dots' });
   for (let i = 0; i < CONFIG.MAX_ADDS; i++) addDots.appendChild(h('span', { className: `pick-dot add ${i < addP.length ? 'filled' : ''}` }));
-  content.appendChild(h('div', { className: 'pick-bar' },
-    h('span', { className: 'pick-label' }, '➕ Nové nápoje:'), addDots,
-    h('span', { className: 'pick-num' }, `${addP.length}/${CONFIG.MAX_ADDS}`),
-  ));
+  content.appendChild(h('div', { className: 'pick-bar' }, h('span', { className: 'pick-label' }, '➕ Nové nápoje:'), addDots, h('span', { className: 'pick-num' }, `${addP.length}/${CONFIG.MAX_ADDS}`)));
 
-  // Add own drink
   const addInput = h('input', { className: 'input', placeholder: 'Název nového nápoje…', value: newDrinkInput,
     onInput: e => { state.newDrinkInput = e.target.value; },
     onKeydown: e => { if (e.key === 'Enter') addOwnDrink(); } });
   content.appendChild(h('div', { className: 'add-own' },
     h('p', { className: 'add-own-label' }, '➕ Přidat vlastní nápoj ', h('span', { className: 'add-own-note' }, `(max ${CONFIG.MAX_ADDS}, automaticky s 1 hlasem)`)),
-    h('div', { className: 'row' }, addInput,
-      h('button', { className: 'btn btn-p', onClick: addOwnDrink }, '+ Přidat')),
+    h('div', { className: 'row' }, addInput, h('button', { className: 'btn btn-p', onClick: addOwnDrink }, '+ Přidat')),
   ));
 
-  // Existing drinks — row list
   if (data.drinks.length > 0) {
     content.appendChild(h('p', { className: 'pick-hint' }, `Hlasuj pro existující nápoje (max ${CONFIG.MAX_VOTES}):`));
     const list = h('div', { className: 'drink-rows' });
     data.drinks.forEach((drink, i) => {
       const sel = picks.includes(drink);
-      const row = h('button', { className: `d-row ${sel ? 'selected' : ''}`, onClick: () => togglePick(drink) },
+      list.appendChild(h('button', { className: `d-row ${sel ? 'selected' : ''}`, onClick: () => togglePick(drink) },
         h('span', { className: 'd-row-emoji' }, emoji(i)),
         h('span', { className: 'd-row-name' }, drink),
         sel ? h('span', { className: 'd-row-tick' }, '✓') : null,
-      );
-      list.appendChild(row);
+      ));
     });
     content.appendChild(list);
   }
 
-  // Picks summary
   if (picks.length > 0) {
     const tags = h('div', { className: 'pick-tags' });
     picks.forEach(p => {
@@ -838,18 +623,14 @@ function renderVote() {
       tag.appendChild(h('button', { className: 'pick-tag-x', onClick: () => removePick(p) }, '✕'));
       tags.appendChild(tag);
     });
-    content.appendChild(h('div', { className: 'pick-summary' },
-      h('p', { className: 'pick-sum-label' }, 'Tvůj výběr:'), tags,
-    ));
+    content.appendChild(h('div', { className: 'pick-summary' }, h('p', { className: 'pick-sum-label' }, 'Tvůj výběr:'), tags));
   }
 
-  const isSubmitting = !!state.submitting;
-  const canSubmit = picks.length > 0 && !isSubmitting;
   content.appendChild(h('button', {
     className: 'btn btn-p w-full mt-md',
-    style: { opacity: canSubmit ? '1' : '.5', touchAction: 'manipulation' },
+    style: { opacity: picks.length === 0 ? '.5' : '1', touchAction: 'manipulation' },
     onClick: submitVote,
-  }, isSubmitting ? '⏳ Ukládám hlasy…' : 'Odeslat hlas 🗳'));
+  }, 'Odeslat hlas 🗳'));
 
   return content;
 }
@@ -857,63 +638,44 @@ function renderVote() {
 function renderResults() {
   const { data } = state;
   if (data.drinks.length === 0) {
-    return h('div', { className: 'empty' },
-      h('p', { className: 'empty-icon' }, '📊'),
-      h('p', { className: 'empty-text' }, 'Zatím nejsou žádné nápoje ani hlasy.'),
-    );
+    return h('div', { className: 'empty' }, h('p', { className: 'empty-icon' }, '📊'), h('p', { className: 'empty-text' }, 'Zatím nejsou žádné nápoje ani hlasy.'));
   }
-
   const sorted = [...data.drinks].sort((a, b) => (data.votes[b] || 0) - (data.votes[a] || 0));
   const maxV = Math.max(...Object.values(data.votes || {}), 1);
   const totalVotes = Object.values(data.votes).reduce((a, b) => a + b, 0);
 
   const content = h('div', null);
-
-  // Stats
   content.appendChild(h('div', { className: 'stats' },
     h('div', { className: 'stat-box' }, h('span', { className: 'stat-n' }, `${data.voters.length}`), h('span', { className: 'stat-l' }, 'hlasujících')),
     h('div', { className: 'stat-box' }, h('span', { className: 'stat-n' }, `${data.drinks.length}`), h('span', { className: 'stat-l' }, 'nápojů')),
     h('div', { className: 'stat-box' }, h('span', { className: 'stat-n' }, `${totalVotes}`), h('span', { className: 'stat-l' }, 'hlasů')),
   ));
 
-  // Results list
   const list = h('div', { className: 'res-list' });
   sorted.forEach((drink, i) => {
     const v = data.votes[drink] || 0;
     const pct = maxV > 0 ? (v / maxV) * 100 : 0;
-    const bg = i === 0 ? 'linear-gradient(90deg,#0ea5e9,#06b6d4)' :
-      i === 1 ? 'linear-gradient(90deg,#38bdf8,#67e8f9)' : 'linear-gradient(90deg,#94a3b8,#cbd5e1)';
+    const bg = i === 0 ? 'linear-gradient(90deg,#0ea5e9,#06b6d4)' : i === 1 ? 'linear-gradient(90deg,#38bdf8,#67e8f9)' : 'linear-gradient(90deg,#94a3b8,#cbd5e1)';
     list.appendChild(h('div', { className: 'res-row' },
       h('div', { className: 'res-rank' }, rankIcon(i, v)),
       h('div', { className: 'res-info' },
-        h('div', { className: 'res-head' },
-          h('span', { className: 'res-name' }, `${emoji(data.drinks.indexOf(drink))} ${drink}`),
-          h('span', { className: 'res-votes' }, `${v} ${voteLabel(v)}`),
-        ),
+        h('div', { className: 'res-head' }, h('span', { className: 'res-name' }, `${emoji(data.drinks.indexOf(drink))} ${drink}`), h('span', { className: 'res-votes' }, `${v} ${voteLabel(v)}`)),
         h('div', { className: 'bar-bg' }, h('div', { className: 'bar-fill', style: { width: `${pct}%`, background: bg } })),
       ),
     ));
   });
   content.appendChild(list);
-
-  // Refresh button
   content.appendChild(h('button', { className: 'btn btn-sec w-full mt-md', onClick: () => { setState({ loading: true }); loadData(); } }, '🔄 Obnovit výsledky'));
-
   return content;
 }
 
 function renderAdmin() {
   if (!state.adminUnlocked) {
-    const pinInput = h('input', {
-      className: `input ${state.pinError ? 'input-err' : ''}`, type: 'password', placeholder: 'Heslo správce…',
-      value: state.pinInput,
-      onInput: e => { state.pinInput = e.target.value; state.pinError = false; },
-      onKeydown: e => { if (e.key === 'Enter') tryUnlockAdmin(); },
-    });
-    const card = h('div', { className: 'card' },
-      h('p', { className: 'card-label' }, '🔒 Správa je chráněna heslem'),
-      h('div', { className: 'row' }, pinInput, h('button', { className: 'btn btn-p', onClick: tryUnlockAdmin }, 'Odemknout')),
-    );
+    const pinInput = h('input', { className: `input ${state.pinError ? 'input-err' : ''}`, type: 'password', placeholder: 'Heslo správce…',
+      value: state.pinInput, onInput: e => { state.pinInput = e.target.value; state.pinError = false; },
+      onKeydown: e => { if (e.key === 'Enter') tryUnlockAdmin(); } });
+    const card = h('div', { className: 'card' }, h('p', { className: 'card-label' }, '🔒 Správa je chráněna heslem'),
+      h('div', { className: 'row' }, pinInput, h('button', { className: 'btn btn-p', onClick: tryUnlockAdmin }, 'Odemknout')));
     if (state.pinError) card.appendChild(h('p', { className: 'err' }, 'Špatné heslo.'));
     return card;
   }
@@ -921,107 +683,84 @@ function renderAdmin() {
   const { data } = state;
   const content = h('div', null);
 
-  // ── Active voters warning ──
   const now = Date.now();
-  const active = (data.activeVoters || []).filter(v => (now - (v.ts || 0)) < STALE_THRESHOLD);
+  const active = (data.activeVoters || []).filter(v => (now - (v.ts || 0)) < 30000);
   if (active.length > 0) {
-    const warn = h('div', { className: 'active-warn' },
+    content.appendChild(h('div', { className: 'active-warn' },
       h('p', { className: 'active-warn-title' }, '⚠️ Někdo právě hlasuje'),
-      h('p', { className: 'active-warn-text' },
-        'Doporučujeme počkat s úpravami, dokud hlasování neskončí. Jinak se mohou hlasy ztratit.'),
-      h('div', { className: 'active-list' },
-        ...active.map(v => h('span', { className: 'active-chip' }, `🟢 ${v.name}`))),
-    );
-    content.appendChild(warn);
+      h('p', { className: 'active-warn-text' }, 'Doporučujeme počkat s úpravami, dokud hlasování neskončí.'),
+      h('div', { className: 'active-list' }, ...active.map(v => h('span', { className: 'active-chip' }, `🟢 ${v.name}`))),
+    ));
   }
 
-  // ── Users ──
+  // Users
   const usersBlock = h('div', { className: 'admin-block' },
     h('p', { className: 'admin-title' }, '👥 Uživatelé'),
     h('p', { className: 'hint' }, 'Zadejte jméno, heslo se vygeneruje automaticky. Kliknutím na heslo ho zkopírujete.'),
   );
   const nameIn = h('input', { className: 'input', placeholder: 'Jméno', value: state.newUserName,
-    onInput: e => { state.newUserName = e.target.value; },
-    onKeydown: e => { if (e.key === 'Enter') adminAddUser(); } });
-  usersBlock.appendChild(h('div', { className: 'row' }, nameIn,
-    h('button', { className: 'btn btn-p', onClick: adminAddUser }, '+ Přidat')));
+    onInput: e => { state.newUserName = e.target.value; }, onKeydown: e => { if (e.key === 'Enter') adminAddUser(); } });
+  usersBlock.appendChild(h('div', { className: 'row' }, nameIn, h('button', { className: 'btn btn-p', onClick: adminAddUser }, '+ Přidat')));
   if (data.users.length > 0) {
     const ul = h('div', { className: 'a-list' });
     data.users.forEach(u => {
       const voted = data.voters.some(v => v.id === u.id);
       const info = h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '0', flexWrap: 'wrap' } },
         h('span', { className: 'a-item-name' }, u.name),
-        h('button', { className: 'pass-chip', onClick: () => copyToClipboard(u.password), title: 'Kopírovat heslo' },
-          `🔑 ${u.password}`));
+        h('button', { className: 'pass-chip', onClick: () => copyToClipboard(u.password) }, `🔑 ${u.password}`));
       if (voted) info.appendChild(h('span', { className: 'voted-badge' }, 'hlasoval/a'));
-      ul.appendChild(h('div', { className: 'a-item' }, info,
-        h('button', { className: 'btn-rm', onClick: () => adminRemoveUser(u.id) }, '✕')));
+      ul.appendChild(h('div', { className: 'a-item' }, info, h('button', { className: 'btn-rm', onClick: () => adminRemoveUser(u.id) }, '✕')));
     });
     usersBlock.appendChild(ul);
   }
   content.appendChild(usersBlock);
 
-  // ── Drinks ──
-  const drinksBlock = h('div', { className: 'admin-block' },
-    h('p', { className: 'admin-title' }, '🥤 Nápoje'),
-  );
+  // Drinks
+  const drinksBlock = h('div', { className: 'admin-block' }, h('p', { className: 'admin-title' }, '🥤 Nápoje'));
   const drinkIn = h('input', { className: 'input', placeholder: 'Název nápoje…', value: state.adminNewDrink,
-    onInput: e => { state.adminNewDrink = e.target.value; },
-    onKeydown: e => { if (e.key === 'Enter') adminAddDrink(); } });
-  drinksBlock.appendChild(h('div', { className: 'row' }, drinkIn,
-    h('button', { className: 'btn btn-p', onClick: adminAddDrink }, '+ Přidat')));
+    onInput: e => { state.adminNewDrink = e.target.value; }, onKeydown: e => { if (e.key === 'Enter') adminAddDrink(); } });
+  drinksBlock.appendChild(h('div', { className: 'row' }, drinkIn, h('button', { className: 'btn btn-p', onClick: adminAddDrink }, '+ Přidat')));
   if (data.drinks.length > 0) {
     const dl = h('div', { className: 'a-list' });
     data.drinks.forEach((d, i) => {
       const btns = h('div', { style: { display: 'flex', gap: '4px', flexShrink: '0' } });
-      if (i > 0) btns.appendChild(h('button', { className: 'btn-move', onClick: () => adminMoveDrink(i, -1), title: 'Nahoru' }, '▲'));
+      if (i > 0) btns.appendChild(h('button', { className: 'btn-move', onClick: () => adminMoveDrink(i, -1) }, '▲'));
       else btns.appendChild(h('span', { className: 'btn-move', style: { opacity: '0', pointerEvents: 'none' } }, '▲'));
-      if (i < data.drinks.length - 1) btns.appendChild(h('button', { className: 'btn-move', onClick: () => adminMoveDrink(i, 1), title: 'Dolů' }, '▼'));
+      if (i < data.drinks.length - 1) btns.appendChild(h('button', { className: 'btn-move', onClick: () => adminMoveDrink(i, 1) }, '▼'));
       else btns.appendChild(h('span', { className: 'btn-move', style: { opacity: '0', pointerEvents: 'none' } }, '▼'));
-      btns.appendChild(h('button', { className: 'btn-edit', onClick: () => adminRenameDrink(d), title: 'Přejmenovat' }, '✏️'));
-      btns.appendChild(h('button', { className: 'btn-rm', onClick: () => adminRemoveDrink(d), title: 'Smazat' }, '✕'));
+      btns.appendChild(h('button', { className: 'btn-edit', onClick: () => adminRenameDrink(d) }, '✏️'));
+      btns.appendChild(h('button', { className: 'btn-rm', onClick: () => adminRemoveDrink(d) }, '✕'));
       dl.appendChild(h('div', { className: 'a-item' },
         h('span', { style: { flex: '1', minWidth: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
-          `${emoji(i)} ${d} `, h('span', { className: 'a-vote-count' }, `(${data.votes[d] || 0})`)),
-        btns));
+          `${emoji(i)} ${d} `, h('span', { className: 'a-vote-count' }, `(${data.votes[d] || 0})`)), btns));
     });
     drinksBlock.appendChild(dl);
   }
   content.appendChild(drinksBlock);
 
-  // ── Merge ──
+  // Merge
   if (data.drinks.length >= 2) {
     const mergeBlock = h('div', { className: 'admin-block' },
       h('p', { className: 'admin-title' }, '🔗 Sloučit duplikáty'),
-      h('p', { className: 'hint' }, 'Vyberte dva nápoje — druhý se sloučí do prvního.'),
-    );
-
-    const selA = h('select', { className: 'select', onInput: e => { state.mergeA = e.target.value; render(); } },
-      h('option', { value: '' }, 'Ponechat ↓'));
+      h('p', { className: 'hint' }, 'Druhý nápoj se sloučí do prvního.'));
+    const selA = h('select', { className: 'select', onInput: e => { state.mergeA = e.target.value; render(); } }, h('option', { value: '' }, 'Ponechat ↓'));
     data.drinks.forEach(d => { const o = h('option', { value: d }, `${d} (${data.votes[d]||0})`); if (d === state.mergeA) o.selected = true; selA.appendChild(o); });
-
-    const selB = h('select', { className: 'select', onInput: e => { state.mergeB = e.target.value; render(); } },
-      h('option', { value: '' }, 'Sloučit ↓'));
+    const selB = h('select', { className: 'select', onInput: e => { state.mergeB = e.target.value; render(); } }, h('option', { value: '' }, 'Sloučit ↓'));
     data.drinks.filter(d => d !== state.mergeA).forEach(d => { const o = h('option', { value: d }, `${d} (${data.votes[d]||0})`); if (d === state.mergeB) o.selected = true; selB.appendChild(o); });
-
-    mergeBlock.appendChild(h('div', { className: 'row' }, selA,
-      h('span', { style: { fontWeight: '700', color: 'var(--slate-500)', alignSelf: 'center' } }, '←'), selB));
-
+    mergeBlock.appendChild(h('div', { className: 'row' }, selA, h('span', { style: { fontWeight: '700', color: 'var(--slate-500)', alignSelf: 'center' } }, '←'), selB));
     if (state.mergeA && state.mergeB && state.mergeA !== state.mergeB) {
       const total = (data.votes[state.mergeA]||0) + (data.votes[state.mergeB]||0);
       mergeBlock.appendChild(h('p', { className: 'merge-preview' },
-        `„${state.mergeB}" (${data.votes[state.mergeB]||0}) → sloučí do → „${state.mergeA}" (${data.votes[state.mergeA]||0}) = `, h('strong', null, `${total} hlasů`)));
+        `„${state.mergeB}" (${data.votes[state.mergeB]||0}) → „${state.mergeA}" (${data.votes[state.mergeA]||0}) = `, h('strong', null, `${total} hlasů`)));
     }
-    mergeBlock.appendChild(h('button', { className: 'btn btn-p mt-sm', onClick: adminMerge,
-      disabled: !state.mergeA || !state.mergeB || state.mergeA === state.mergeB }, 'Sloučit'));
+    mergeBlock.appendChild(h('button', { className: 'btn btn-p mt-sm', onClick: adminMerge }, 'Sloučit'));
     content.appendChild(mergeBlock);
   }
 
-  // ── Voter management ──
+  // Voter management
   const voterBlock = h('div', { className: 'admin-block' },
     h('p', { className: 'admin-title' }, '🗳 Správa hlasů'),
-    h('p', { className: 'hint' }, 'Smazáním hlasu umožníte dané osobě hlasovat znovu.'),
-  );
+    h('p', { className: 'hint' }, 'Smazáním hlasu umožníte dané osobě hlasovat znovu.'));
   if (data.voters.length === 0) {
     voterBlock.appendChild(h('p', { className: 'hint' }, 'Zatím nikdo nehlasoval.'));
   } else {
@@ -1029,54 +768,50 @@ function renderAdmin() {
     data.voters.forEach(voter => {
       const info = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '2px', flex: '1', minWidth: '0' } },
         h('span', { className: 'a-item-name' }, voter.name),
-        h('span', { className: 'a-item-sub' }, (voter.picks || []).join(', ')));
-      vl.appendChild(h('div', { className: 'a-item' }, info,
-        h('button', { className: 'btn-rm', onClick: () => adminRemoveVoter(voter.id) }, '✕')));
+        h('span', { className: 'a-item-sub' }, (voter.picks||[]).join(', ')));
+      vl.appendChild(h('div', { className: 'a-item' }, info, h('button', { className: 'btn-rm', onClick: () => adminRemoveVoter(voter.id) }, '✕')));
     });
     voterBlock.appendChild(vl);
   }
   content.appendChild(voterBlock);
 
-  // ── Change admin PIN ──
-  const pinBlock = h('div', { className: 'admin-block' },
-    h('p', { className: 'admin-title' }, '🔑 Heslo správce'),
-  );
+  // PIN change
+  const pinBlock = h('div', { className: 'admin-block' }, h('p', { className: 'admin-title' }, '🔑 Heslo správce'));
   const newPinIn = h('input', { className: 'input', type: 'password', placeholder: 'Nové heslo…',
-    value: state.newAdminPin || '',
-    onInput: e => { state.newAdminPin = e.target.value; } });
-  pinBlock.appendChild(h('div', { className: 'row' }, newPinIn,
-    h('button', { className: 'btn btn-p', onClick: adminChangePin }, 'Změnit')));
+    value: state.newAdminPin || '', onInput: e => { state.newAdminPin = e.target.value; } });
+  pinBlock.appendChild(h('div', { className: 'row' }, newPinIn, h('button', { className: 'btn btn-p', onClick: adminChangePin }, 'Změnit')));
   content.appendChild(pinBlock);
 
-  // ── Export ──
+  // Export
   if (data.drinks.length > 0) {
-    const exportBlock = h('div', { className: 'admin-block' },
+    content.appendChild(h('div', { className: 'admin-block' },
       h('p', { className: 'admin-title' }, '📥 Export výsledků'),
-      h('button', { className: 'btn btn-sec', onClick: adminExportCSV }, '📥 Stáhnout CSV'),
-    );
-    content.appendChild(exportBlock);
+      h('button', { className: 'btn btn-sec', onClick: adminExportCSV }, '📥 Stáhnout CSV')));
   }
 
-  // ── Danger zone ──
+  // Danger
   content.appendChild(h('div', { className: 'danger' },
     h('p', { className: 'danger-label' }, 'Nebezpečná zóna'),
-    h('button', { className: 'btn-danger', onClick: resetAll }, '🗑 Resetovat celou anketu'),
-  ));
+    h('button', { className: 'btn-danger', onClick: resetAll }, '🗑 Resetovat celou anketu')));
 
   return content;
 }
 
 // ── Init ──
-if (CONFIG.JSONBIN_BIN_ID && CONFIG.JSONBIN_API_KEY) loadData();
-else { state.loading = false; }
+if (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON) {
+  supa = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON);
+  loadData();
+} else {
+  state.loading = false;
+}
 render();
 
-// Auto-refresh data when admin has the admin panel open (to see live active voters)
+// Auto-refresh in admin to see active voters
 setInterval(() => {
   if (state.tab === 'admin' && state.adminUnlocked && !state.loading && !state.submitting) {
     loadData();
   }
-}, 10000); // refresh every 10s
+}, 10000);
 </script>
 </body>
 </html>
