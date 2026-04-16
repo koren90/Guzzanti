@@ -91,6 +91,14 @@ body {
 .pick-hint { font-size: 13px; color: var(--slate-500); margin-bottom: 10px; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .d-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border-radius: 12px; border: 2px solid var(--slate-200); background: #fff; cursor: pointer; transition: all .15s; position: relative; font-family: inherit; font-size: 13px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
+.drink-rows { display: flex; flex-direction: column; gap: 4px; }
+.d-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--slate-200); background: #fff; cursor: pointer; transition: all .15s; font-family: inherit; font-size: 14px; text-align: left; width: 100%; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
+.d-row:active { background: var(--slate-100); }
+.d-row.selected { border-color: var(--sky-600); background: var(--sky-50); }
+.d-row-emoji { font-size: 18px; flex-shrink: 0; }
+.d-row-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-row-check { width: 22px; height: 22px; border-radius: 50%; background: var(--sky-600); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.d-row-check.empty { background: transparent; border: 2px solid var(--slate-200); }
 .d-card:hover { border-color: var(--slate-300); }
 .d-card.selected { border-color: var(--sky-600); background: var(--sky-50); box-shadow: 0 0 0 3px rgba(2,132,199,.15); }
 .d-emoji { font-size: 26px; }
@@ -778,21 +786,20 @@ function renderVote() {
       h('button', { className: 'btn btn-p', onClick: addOwnDrink }, '+ Přidat')),
   ));
 
-  // Existing drinks grid
+  // Existing drinks — row list
   if (data.drinks.length > 0) {
     content.appendChild(h('p', { className: 'pick-hint' }, `Hlasuj pro existující nápoje (max ${CONFIG.MAX_VOTES}):`));
-    const grid = h('div', { className: 'grid' });
+    const list = h('div', { className: 'drink-rows' });
     data.drinks.forEach((drink, i) => {
       const sel = picks.includes(drink);
-      const card = h('button', { className: `d-card ${sel ? 'selected' : ''}`, onClick: () => togglePick(drink) },
-        h('span', { className: 'd-emoji' }, emoji(i)),
-        h('span', { className: 'd-name' }, drink),
-        h('span', { className: 'd-votes' }, `${data.votes[drink] || 0} hl.`),
+      const row = h('button', { className: `d-row ${sel ? 'selected' : ''}`, onClick: () => togglePick(drink) },
+        h('span', { className: 'd-row-emoji' }, emoji(i)),
+        h('span', { className: 'd-row-name' }, drink),
+        sel ? h('span', { className: 'd-row-check' }, '✓') : h('span', { className: 'd-row-check empty' }),
       );
-      if (sel) card.appendChild(h('span', { className: 'd-check' }, '✓'));
-      grid.appendChild(card);
+      list.appendChild(row);
     });
-    content.appendChild(grid);
+    content.appendChild(list);
   }
 
   // Picks summary
