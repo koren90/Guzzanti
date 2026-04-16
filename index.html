@@ -210,7 +210,15 @@ let state = {
 };
 
 function setState(patch) {
-  Object.assign(state, patch);
+  // During submit, freeze the UI: ignore data updates to prevent flicker.
+  // Only allow changes to submitting flag and toast.
+  if (state.submitting && 'data' in patch && !('submitting' in patch)) {
+    // Still apply non-data patches
+    const { data, ...rest } = patch;
+    Object.assign(state, rest);
+  } else {
+    Object.assign(state, patch);
+  }
   render();
 }
 
@@ -1065,7 +1073,7 @@ render();
 
 // Auto-refresh data when admin has the admin panel open (to see live active voters)
 setInterval(() => {
-  if (state.tab === 'admin' && state.adminUnlocked && !state.loading) {
+  if (state.tab === 'admin' && state.adminUnlocked && !state.loading && !state.submitting) {
     loadData();
   }
 }, 10000); // refresh every 10s
