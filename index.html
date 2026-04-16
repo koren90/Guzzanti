@@ -716,7 +716,7 @@ function renderSetup() {
 
 function renderVote() {
   const { data, currentUser, picks, newDrinkInput } = state;
-  const hasVoted = currentUser && data.voters.some(v => v.id === currentUser.id);
+  const hasVoted = currentUser && !state.submitting && data.voters.some(v => v.id === currentUser.id);
 
   if (!currentUser) {
     // Login form
