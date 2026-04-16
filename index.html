@@ -97,8 +97,8 @@ body {
 .d-row.selected { border-color: var(--sky-600); background: var(--sky-50); }
 .d-row-emoji { font-size: 18px; flex-shrink: 0; }
 .d-row-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.d-row-check { width: 22px; height: 22px; border-radius: 50%; background: var(--sky-600); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-.d-row-check.empty { background: transparent; border: 2px solid var(--slate-200); }
+.d-row-check { width: 20px; height: 20px; min-width: 20px; min-height: 20px; border-radius: 50%; background: var(--sky-600); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; box-sizing: border-box; }
+.d-row-check.empty { background: transparent; border: 2px solid var(--slate-300); }
 .d-card:hover { border-color: var(--slate-300); }
 .d-card.selected { border-color: var(--sky-600); background: var(--sky-50); box-shadow: 0 0 0 3px rgba(2,132,199,.15); }
 .d-emoji { font-size: 26px; }
