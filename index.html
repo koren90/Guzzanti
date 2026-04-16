@@ -79,6 +79,7 @@ body {
 .pick-dots { display: flex; gap: 6px; }
 .pick-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--slate-200); transition: all .2s; }
 .pick-dot.filled { background: var(--sky-500); box-shadow: 0 0 6px rgba(14,165,233,.4); }
+.pick-dot.add.filled { background: var(--green-600); box-shadow: 0 0 6px rgba(5,150,105,.4); }
 .pick-num { font-size: 13px; font-weight: 800; color: var(--sky-900); margin-left: auto; }
 
 /* Add own drink */
@@ -173,7 +174,8 @@ details summary { font-size: 13px; color: var(--slate-500); cursor: pointer; fon
 const CONFIG = {
   JSONBIN_BIN_ID:   '69dfdfbfaaba88219702568f',
   JSONBIN_API_KEY:  '$2a$10$1PoDSoz3RJq6vxaq.jRw2Oc0j/L8AH9ZxVr98dl7FSQ6dMwXJuAD2',
-  MAX_PICKS:        3,
+  MAX_VOTES:        3,  // hlasy pro existující nápoje
+  MAX_ADDS:         1,  // max počet nově přidaných nápojů (každý = +1 hlas navíc)
 };
 // ════════════════════════════════════════════════════════════
 
@@ -397,11 +399,20 @@ window.addEventListener('beforeunload', () => {
   // Stale threshold (30s) will auto-remove them.
 });
 
+// Split picks by type
+function countPicks() {
+  const existing = (state.data?.drinks) || [];
+  const votes = state.picks.filter(p => existing.some(d => norm(d) === norm(p)));
+  const adds = state.picks.filter(p => !existing.some(d => norm(d) === norm(p)));
+  return { votes, adds };
+}
+
 function togglePick(drink) {
   const { picks } = state;
-  if (picks.includes(drink)) setState({ picks: picks.filter(p => p !== drink) });
-  else if (picks.length < CONFIG.MAX_PICKS) setState({ picks: [...picks, drink] });
-  else showToast(`Max. ${CONFIG.MAX_PICKS} hlasů/přidání!`);
+  if (picks.includes(drink)) { setState({ picks: picks.filter(p => p !== drink) }); return; }
+  const { votes } = countPicks();
+  if (votes.length >= CONFIG.MAX_VOTES) { showToast(`Max. ${CONFIG.MAX_VOTES} hlasy pro existující nápoje!`); return; }
+  setState({ picks: [...picks, drink] });
 }
 
 function removePick(drink) { setState({ picks: state.picks.filter(p => p !== drink) }); }
@@ -409,12 +420,20 @@ function removePick(drink) { setState({ picks: state.picks.filter(p => p !== dri
 function addOwnDrink() {
   const name = state.newDrinkInput.trim();
   if (!name) return;
-  if (state.picks.length >= CONFIG.MAX_PICKS) { showToast(`Max. ${CONFIG.MAX_PICKS} hlasů/přidání!`); return; }
   const existing = state.data.drinks.find(d => norm(d) === norm(name));
   if (existing) {
-    if (state.picks.includes(existing)) { showToast(`„${existing}" už máš vybraný.`); }
-    else { setState({ picks: [...state.picks, existing] }); showToast(`„${existing}" už existuje — přidán hlas.`); }
-    setState({ newDrinkInput: '' }); return;
+    // It's an existing drink — add as vote
+    const { votes } = countPicks();
+    if (state.picks.includes(existing)) { showToast(`„${existing}" už máš vybraný.`); setState({ newDrinkInput: '' }); return; }
+    if (votes.length >= CONFIG.MAX_VOTES) { showToast(`„${existing}" už existuje, ale máš maximum hlasů (${CONFIG.MAX_VOTES}).`); setState({ newDrinkInput: '' }); return; }
+    setState({ picks: [...state.picks, existing], newDrinkInput: '' });
+    showToast(`„${existing}" už existuje — přidán hlas.`);
+    return;
+  }
+  // New drink — check adds limit
+  const { adds } = countPicks();
+  if (adds.length >= CONFIG.MAX_ADDS) {
+    showToast(`Můžeš přidat max. ${CONFIG.MAX_ADDS} nový nápoj.`); return;
   }
   const inPicks = state.picks.find(p => norm(p) === norm(name));
   if (inPicks) { showToast(`„${inPicks}" už máš vybraný.`); setState({ newDrinkInput: '' }); return; }
@@ -733,12 +752,20 @@ function renderVote() {
     h('button', { className: 'btn-tiny', onClick: doLogout }, 'Odhlásit'),
   ));
 
-  // Pick bar
-  const dots = h('div', { className: 'pick-dots' });
-  for (let i = 0; i < CONFIG.MAX_PICKS; i++) dots.appendChild(h('span', { className: `pick-dot ${i < picks.length ? 'filled' : ''}` }));
+  // Pick bars — two separate counters
+  const { votes: voteP, adds: addP } = countPicks();
+  const voteDots = h('div', { className: 'pick-dots' });
+  for (let i = 0; i < CONFIG.MAX_VOTES; i++) voteDots.appendChild(h('span', { className: `pick-dot ${i < voteP.length ? 'filled' : ''}` }));
   content.appendChild(h('div', { className: 'pick-bar' },
-    h('span', { className: 'pick-label' }, 'Hlasy / přidání:'), dots,
-    h('span', { className: 'pick-num' }, `${picks.length}/${CONFIG.MAX_PICKS}`),
+    h('span', { className: 'pick-label' }, '🗳 Hlasy:'), voteDots,
+    h('span', { className: 'pick-num' }, `${voteP.length}/${CONFIG.MAX_VOTES}`),
+  ));
+
+  const addDots = h('div', { className: 'pick-dots' });
+  for (let i = 0; i < CONFIG.MAX_ADDS; i++) addDots.appendChild(h('span', { className: `pick-dot add ${i < addP.length ? 'filled' : ''}` }));
+  content.appendChild(h('div', { className: 'pick-bar' },
+    h('span', { className: 'pick-label' }, '➕ Nové nápoje:'), addDots,
+    h('span', { className: 'pick-num' }, `${addP.length}/${CONFIG.MAX_ADDS}`),
   ));
 
   // Add own drink
@@ -746,14 +773,14 @@ function renderVote() {
     onInput: e => { state.newDrinkInput = e.target.value; },
     onKeydown: e => { if (e.key === 'Enter') addOwnDrink(); } });
   content.appendChild(h('div', { className: 'add-own' },
-    h('p', { className: 'add-own-label' }, '➕ Přidat vlastní nápoj ', h('span', { className: 'add-own-note' }, '(počítá se jako 1 hlas)')),
+    h('p', { className: 'add-own-label' }, '➕ Přidat vlastní nápoj ', h('span', { className: 'add-own-note' }, `(max ${CONFIG.MAX_ADDS}, automaticky s 1 hlasem)`)),
     h('div', { className: 'row' }, addInput,
       h('button', { className: 'btn btn-p', onClick: addOwnDrink }, '+ Přidat')),
   ));
 
   // Existing drinks grid
   if (data.drinks.length > 0) {
-    content.appendChild(h('p', { className: 'pick-hint' }, 'Nebo hlasuj pro existující nápoje (stačí i 1):'));
+    content.appendChild(h('p', { className: 'pick-hint' }, `Hlasuj pro existující nápoje (max ${CONFIG.MAX_VOTES}):`));
     const grid = h('div', { className: 'grid' });
     data.drinks.forEach((drink, i) => {
       const sel = picks.includes(drink);
